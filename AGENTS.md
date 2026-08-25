@@ -58,6 +58,7 @@ Per-member implementation plans are in `plans/`:
 - [Initial Setup](file:///plans/_Initial_setup_plan.md) — shared onboarding: SDK, SQL Server, branches, `appsettings.Development.json`.
 - [Erin — Frontend Plan](file:///plans/Erin_plan.md) — Razor Views, Bootstrap UI, Chart.js rendering, responsive layout.
 - [Farin — Identity & Alerts Plan](file:///plans/Farin_plan.md) — Auth, Admin alert CRUD, district filtering logic, DbContext/migrations.
-- [Anika — External Data & Shelters Plan](file:///plans/Anika_plan.md) — USGS integration service, Shelter directory, safety guideline content, analytics data.
+- [Erin — Frontend Plan](file:///plans/Erin_plan.md) — Razor Views, Bootstrap UI, Chart.js rendering, responsive layout, `AnalyticsService` + analytics JSON endpoint.
+- [Anika — External Data & Shelters Plan](file:///plans/Anika_plan.md) — USGS integration service, Shelter directory, safety guideline content. *(Analytics data moved to Erin's plan to balance workload.)*
 
 **Team:** Farin Maisha (20230104001) · Sanjida Amin Erin (20230104016) · Anika Sultana (20230104018) — Group A1, submitted to Tanjila Broti, Dept. of CSE, AUST.
