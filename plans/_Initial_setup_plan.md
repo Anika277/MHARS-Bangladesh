@@ -40,6 +40,23 @@ git checkout <your-branch>
 
 ---
 
+## 2.1 Team Dependency Map (read this before starting work)
+
+**Blocking order for Checkpoint 1:** Anika shares the `Shelter` model → **Farin** builds DbContext/Identity/migration + `Districts.cs` + seed data → everyone unblocked.
+
+| Depends on | Who | For what |
+|---|---|---|
+| **Farin** ← Anika | Shelter model shape | Before first migration (`InitialCreate`) |
+| **Farin** → everyone | `AppDbContext`, Identity wiring, `Districts.cs`, seed Admin/alerts | End of CP1 — this is the critical path; all DB work blocks on it |
+| **Anika** ← Farin | `AppDbContext` + DI in `Program.cs` | Migrating `Shelter`, registering `UsgsFeedService` timer |
+| **Erin** ← Farin | `Constants/Districts.cs` list | All district dropdowns must match DB values exactly |
+| **Erin** ← Anika | Safety guidance copy | Safety pages (build shells with placeholders meanwhile) |
+| **Everyone** ← Erin | ViewModel classes with mock data | Published early — they define the API shapes controllers must match |
+
+Rule of thumb: **if you're blocked, build against mock data / interfaces and keep moving** — don't wait idle on a teammate's merge.
+
+---
+
 ## 3. Configure `appsettings.Development.json`
 
 Copy the template and fill in the local connection string:

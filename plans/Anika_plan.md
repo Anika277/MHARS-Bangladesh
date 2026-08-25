@@ -1,6 +1,6 @@
 # Anika — External Data, Shelters & Analytics Plan
 
-Branch: `anika/usgs-shelters-analytics`. Owns: `Shelter` model, `UsgsFeedService`, `ShelterController`, safety guidance content, `AnalyticsService`.
+Branch: `anika/usgs-shelters-analytics`. Owns: `Shelter` model, `UsgsFeedService`, `ShelterController`, safety guidance content. *(Analytics data moved to Erin's plan — see her Final Checkpoint; you focus on USGS integration, which is this project's hardest single component.)*
 
 ---
 
@@ -49,7 +49,7 @@ public class UsgsFeedService : IUsgsFeedService
         try
         {
             var geojson = await _http.GetFromJsonAsync<UsgsFeatureCollection>(
-                "https://earthquake.usgs.gov/earthquakehazards/feed/v1.0/summary/significant_month.geojson");
+                "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson");
 
             foreach (var feature in geojson.Features.Where(IsInRegion))
             {
@@ -68,7 +68,9 @@ public class UsgsFeedService : IUsgsFeedService
         f.Geometry.Coordinates[0] is >= 88 and <= 93;      // longitude band
 }
 ```
-- Run this on a schedule — an `IHostedService` with `PeriodicTimer` (e.g. every 15–30 min) is the simplest correct approach; a scheduled call on app startup plus that timer covers both "always has data" and "doesn't hammer USGS."
+> [!NOTE]
+> USGS GeoJSON returns coordinates as JSON numbers (`double`). Define your DTO classes with `double` properties and convert to `decimal` when mapping into the `Alert` entity — `GetFromJsonAsync` will throw or mis-map if you declare them as `decimal` directly.
+- Run this on a schedule — an `IHostedService` with `PeriodicTimer` (e.g. every 15–30 min) is the simplest correct approach; a scheduled call on app startup plus that timer covers both "always has data" and "doesn't hammer USGS." If the `IHostedService` wiring slows you down, pair with Farin (she owns `Program.cs` DI config) — split it: you write the service class, she registers it.
 - Severity mapping: `<4.0` → Low, `4.0–6.0` → Medium, `>6.0` → High (design.md §3.3).
 - **Never let a USGS failure throw past this method** — catch and log, keep the last successfully fetched alerts in the DB as-is.
 
@@ -79,27 +81,31 @@ public class UsgsFeedService : IUsgsFeedService
 
 ---
 
-## Final Checkpoint: Analytics
+## Final Checkpoint: Hardening & Handoff
 
-### Step 3.1 — `AnalyticsService` (feeds FR-8, data side of Erin's Chart.js view)
-```csharp
-public class AnalyticsService : IAnalyticsService
-{
-    public async Task<List<DistrictMonthCount>> GetAlertCountsAsync() =>
-        await _context.Alerts
-            .GroupBy(a => new { a.District, Month = a.IssuedAt.Month })
-            .Select(g => new DistrictMonthCount
-            {
-                District = g.Key.District,
-                Month = g.Key.Month,
-                Count = g.Count()
-            })
-            .ToListAsync();
-}
-```
-Return this as JSON from an `AdminController` action (e.g. `GET /Admin/AnalyticsData`) so Erin's Chart.js can fetch it client-side — agree the exact JSON shape with her before you build the endpoint, not after.
+> [!NOTE]
+> The analytics service and `/Admin/AnalyticsData` endpoint were **moved to Erin's plan** to balance workload. Your Final Checkpoint is now hardening only.
 
-### Step 3.2 — Hardening
+### Step 3.1 — Hardening
 - [ ] Confirm the app runs and shows flood alerts/shelters with wifi disabled (USGS failure path, NFR-2).
 - [ ] Verify magnitude→severity boundaries with a couple of real USGS test values.
 - [ ] Double-check district spellings in seeded `Shelter` rows match Farin's `Districts.cs` list exactly (case-sensitive text match, per design.md §2.2 trade-off).
+- [ ] Hand Erin a few sample `Alert` rows (via Farin's seed data or a quick manual insert) so she can test the analytics chart against real-shaped data.
+
+---
+
+## Team Dependencies (who waits on whom)
+
+| You need... | From | By when |
+|---|---|---|
+| `AppDbContext` created + Identity wired in `Program.cs` | Farin (Steps 1.2–1.3, 1.7) | End of Checkpoint 1 — you can't migrate `Shelter` until her DbContext exists |
+| `Constants/Districts.cs` shared list | Farin (Step 1.7) | End of Checkpoint 1 — shelter seed rows must match exactly |
+| DI registration help for `IHostedService` | Farin (she owns `Program.cs`) | When wiring the USGS timer in CP2 |
+
+| They need... | What | When |
+|---|---|---|
+| Erin needs | Safety guidance copy (Step 1.2) | End of Checkpoint 1 |
+| Erin needs | Shelter ViewModel shape for Create/Edit/ByDistrict views | Start of Checkpoint 2 |
+| Farin needs | Confirmation of the final `Shelter` model before his first migration | **Start of Checkpoint 1 — send it to him Day 1** |
+
+**Key rule:** your `Shelter` model definition blocks Farin's first migration — write and share that class on Day 1 even if everything else isn't ready.

@@ -1,6 +1,6 @@
-# Erin — Frontend Plan (Views, Bootstrap UI, Chart.js)
+# Erin — Frontend Plan (Views, Bootstrap UI, Chart.js, Analytics)
 
-Branch: `erin/frontend-views`. Owns: `_Layout.cshtml`, every Razor View, `wwwroot`, Chart.js rendering, responsive design (FR-9). You don't own any `DbContext`/model changes — you consume ViewModels that Farin and Anika's controllers pass in.
+Branch: `erin/frontend-views`. Owns: `_Layout.cshtml`, every Razor View, `wwwroot`, Chart.js rendering, `AnalyticsService` + the `/Admin/AnalyticsData` JSON endpoint (moved here from Anika's plan to balance workload), responsive design (FR-9). You don't own any `DbContext`/model changes — you consume ViewModels that Farin and Anika's controllers pass in.
 
 ---
 
@@ -77,9 +77,42 @@ Once Farin's real `AlertController.ByDistrict` action exists, you just change th
 
 ## Final Checkpoint: Analytics Dashboard + Polish
 
-### Step 3.1 — Chart.js Analytics View (FR-8) — `Views/Admin/Analytics.cshtml`
-- Fetch Anika's JSON endpoint client-side (`fetch('/Admin/AnalyticsData')`) and render a bar or line chart of alert counts per district/month.
-- Agree the JSON shape with Anika **before** building this (e.g. `[{ district, month, count }]`) — don't guess and reshape later.
+### Step 3.1 — `AnalyticsService` + `/Admin/AnalyticsData` JSON endpoint (moved from Anika's plan)
+You now own the **data side** of analytics too, not just the chart. This is simple LINQ — no EF migrations needed since it only reads `Alerts`.
+```csharp
+public interface IAnalyticsService
+{
+    Task<List<DistrictMonthCount>> GetAlertCountsAsync();
+}
+
+public class AnalyticsService : IAnalyticsService
+{
+    private readonly AppDbContext _context;
+    public AnalyticsService(AppDbContext context) => _context = context;
+
+    public async Task<List<DistrictMonthCount>> GetAlertCountsAsync() =>
+        await _context.Alerts
+            .GroupBy(a => new { a.District, Year = a.IssuedAt.Year, Month = a.IssuedAt.Month })
+            .Select(g => new DistrictMonthCount
+            {
+                District = g.Key.District,
+                Year = g.Key.Year,
+                Month = g.Key.Month,
+                Count = g.Count()
+            })
+            .ToListAsync();
+}
+```
+- Register in `Program.cs`: `builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();` (coordinate with Farin — she owns that file).
+- Add an `[Authorize(Roles = "Admin")]` JSON action on `AdminController`:
+```csharp
+public async Task<IActionResult> AnalyticsData() =>
+    Json(await _analytics.GetAlertCountsAsync());
+```
+- JSON shape you control end-to-end now: `[{ "district": "...", "year": 2025, "month": 8, "count": 3 }]` — no cross-person contract coordination needed anymore.
+
+### Step 3.2 — Chart.js Analytics View (FR-8) — `Views/Admin/Analytics.cshtml`
+- Fetch your own endpoint client-side (`fetch('/Admin/AnalyticsData')`) and render a bar or line chart of alert counts per district/month.
 ```html
 <canvas id="alertChart"></canvas>
 <script>
@@ -95,11 +128,11 @@ Once Farin's real `AlertController.ByDistrict` action exists, you just change th
 </script>
 ```
 
-### Step 3.2 — Responsive Pass (FR-9)
+### Step 3.3 — Responsive Pass (FR-9)
 - Test every page at mobile width (Bootstrap's `col-*` breakpoints, or just resize the browser) — this app's whole pitch is "check from your phone during an emergency," so a desktop-only layout undercuts the project's own problem statement.
 - Confirm the district dropdown, alert cards, and shelter contact links are all comfortably tappable on a small screen.
 
-### Step 3.3 — Demo Readiness
+### Step 3.4 — Demo Readiness
 - [ ] Walk the full citizen path live: Home → pick district → see alerts → find a shelter → read safety guidance.
 - [ ] Walk the full Admin path live: log in → issue a flood alert → see it appear in the citizen view → check the analytics chart updates.
 - [ ] Confirm no page crashes with an empty district (no alerts/shelters yet) or with the USGS feed unreachable.
@@ -114,8 +147,27 @@ Once Farin's real `AlertController.ByDistrict` action exists, you just change th
 | `AlertController.Create/Edit` (Admin) | `Views/Alert/Create.cshtml`, `Edit.cshtml` | Farin |
 | `ShelterController.ByDistrict(district)` | `Views/Shelter/ByDistrict.cshtml` | Anika |
 | `ShelterController.Create/Edit` (Admin) | `Views/Shelter/Create.cshtml`, `Edit.cshtml` | Anika |
-| `AdminController.AnalyticsData` (JSON) | `Views/Admin/Analytics.cshtml` (fetch + Chart.js) | Anika |
+| `AdminController.AnalyticsData` (JSON) | `Views/Admin/Analytics.cshtml` (fetch + Chart.js) | **You own both sides now** |
 | `Views/Safety/Flood.cshtml`, `Earthquake.cshtml` | static content view | content from Anika |
 
 ### What Erin Delivers
-By the Final Checkpoint: `_Layout.cshtml` + navbar/footer, Home, Login, District Alert view, Shelter Search view, two Safety Guidance pages, Admin Create/Edit forms for both Alert and Shelter, and the Chart.js Analytics dashboard — every page responsive, with graceful empty/error states.
+By the Final Checkpoint: `_Layout.cshtml` + navbar/footer, Home, Login, District Alert view, Shelter Search view, two Safety Guidance pages, Admin Create/Edit forms for both Alert and Shelter, the `AnalyticsService` + `/Admin/AnalyticsData` endpoint, and the Chart.js Analytics dashboard — every page responsive, with graceful empty/error states.
+
+---
+
+## Team Dependencies (who waits on whom)
+
+| You need... | From | By when |
+|---|---|---|
+| `Constants/Districts.cs` shared list | Farin (Step 1.7) | End of Checkpoint 1 — your dropdowns must match DB values exactly |
+| ViewModel shapes for Alert/Shelter forms | Farin & Anika | Before Checkpoint 2 form views — agree field names early |
+| Safety guidance copy | Anika (Step 1.2) | End of Checkpoint 1 — but build the page shells with placeholder text immediately |
+| Seed alert/shelter rows for testing | Farin & Anika (their seed data) | Checkpoint 1 — or use your own mock lists until merged |
+
+| They need... | What | When |
+|---|---|---|
+| Farin needs | Nothing from you directly — but tell her which ViewModel fields your forms bind to before she writes the controllers | Before Checkpoint 2 |
+| Anika needs | Sample-shaped `Alert` data in DB to sanity-check her USGS upserts don't clash with seed rows | Final checkpoint |
+| Both need | Your mock-data ViewModels early — they define the de facto API shape for their controllers | ASAP, start of Checkpoint 1 |
+
+**Key rule:** you are the integration point of this project — every controller eventually feeds one of your views. Publish your ViewModel classes first, not last.
