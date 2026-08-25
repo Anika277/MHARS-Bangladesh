@@ -1,0 +1,17 @@
+@model MHARS.Web.Models.Alert
+@{
+    ViewData["Title"] = "Delete Alert";
+}
+<h2>Delete Alert</h2>
+<h5>Are you sure you want to delete this alert?</h5>
+<dl class="row">
+    <dt class="col-sm-3">Hazard</dt><dd class="col-sm-9">@Model.HazardType</dd>
+    <dt class="col-sm-3">District</dt><dd class="col-sm-9">@Model.District</dd>
+    <dt class="col-sm-3">Title</dt><dd class="col-sm-9">@Model.Title</dd>
+    <dt class="col-sm-3">Severity</dt><dd class="col-sm-9">@Model.Severity</dd>
+</dl>
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a class="btn btn-secondary" asp-action="Index">Cancel</a>
+</form>

@@ -1,0 +1,39 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+<h2>Analytics Dashboard</h2>
+
+<div class="row mb-4">
+    <div class="col-md-3"><div class="card text-bg-primary"><div class="card-body"><h5>Total Alerts</h5><h2>@ViewBag.TotalAlerts</h2></div></div></div>
+    <div class="col-md-3"><div class="card text-bg-info"><div class="card-body"><h5>Flood Alerts</h5><h2>@ViewBag.FloodCount</h2></div></div></div>
+    <div class="col-md-3"><div class="card text-bg-warning"><div class="card-body"><h5>Earthquake Alerts</h5><h2>@ViewBag.QuakeCount</h2></div></div></div>
+    <div class="col-md-3"><div class="card text-bg-success"><div class="card-body"><h5>Shelters</h5><h2>@ViewBag.ShelterCount</h2></div></div></div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">Alerts Issued per District</div>
+    <div class="card-body">
+        <canvas id="districtChart" height="100"></canvas>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        new Chart(document.getElementById('districtChart'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(ViewBag.ChartLabels),
+                datasets: [{
+                    label: 'Alerts issued',
+                    data: @Html.Raw(ViewBag.ChartData),
+                    backgroundColor: 'rgba(13, 110, 253, 0.7)'
+                }]
+            },
+            options: {
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    </script>
+}

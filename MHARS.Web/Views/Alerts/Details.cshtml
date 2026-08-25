@@ -1,0 +1,25 @@
+@model MHARS.Web.Models.Alert
+@{
+    var badge = Model.Severity switch
+    {
+        MHARS.Web.Models.SeverityLevel.High => "danger",
+        MHARS.Web.Models.SeverityLevel.Medium => "warning",
+        _ => "success"
+    };
+    ViewData["Title"] = Model.Title;
+}
+<div class="card border-@badge">
+    <div class="card-header text-bg-@badge">
+        <strong>@Model.Severity Risk — @Model.District (@Model.HazardType)</strong>
+    </div>
+    <div class="card-body">
+        <h4>@Model.Title</h4>
+        <p>@Model.Message</p>
+        @if (!string.IsNullOrEmpty(Model.SourceReference))
+        {
+            <p class="text-muted">Source: @Model.SourceReference</p>
+        }
+        <small class="text-muted">Issued by @(Model.IssuedBy ?? "Authority") on @Model.IssuedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</small>
+    </div>
+</div>
+<a class="btn btn-secondary mt-3" asp-controller="Home" asp-action="Index">Back to Alerts</a>

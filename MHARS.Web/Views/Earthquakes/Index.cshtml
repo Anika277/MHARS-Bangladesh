@@ -1,0 +1,37 @@
+@model List<MHARS.Web.Services.EarthquakeEvent>
+@{
+    ViewData["Title"] = "Live Earthquakes (USGS)";
+}
+<h2>Live Earthquake Feed</h2>
+<p class="text-muted">
+    Real events from the last 24 hours, fetched live from the
+    <a href="https://earthquake.usgs.gov/earthquakes/feed/" target="_blank" rel="noopener">USGS Earthquake Hazards Program</a> public API.
+    Auto-colored by magnitude: <span class="badge text-bg-success">&lt; 4.0 Minor</span>
+    <span class="badge text-bg-warning">4.0–6.0 Moderate</span> <span class="badge text-bg-danger">&gt; 6.0 Severe</span>
+</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-warning">Could not reach the USGS feed right now. Please try again later.</div>
+}
+else
+{
+    <table class="table table-hover table-bordered align-middle">
+        <thead class="table-dark">
+            <tr><th>Magnitude</th><th>Risk Level</th><th>Location</th><th>Depth</th><th>Time (UTC)</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model)
+            {
+                <tr>
+                    <td><strong>@e.Magnitude.ToString("0.0")</strong></td>
+                    <td><span class="badge text-bg-@e.BadgeClass">@e.SeverityLabel</span></td>
+                    <td>@e.Place</td>
+                    <td>@e.DepthKm km</td>
+                    <td>@e.TimeUtc.ToString("dd MMM yyyy, hh:mm tt")</td>
+                    <td><a href="@e.Url" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Details</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

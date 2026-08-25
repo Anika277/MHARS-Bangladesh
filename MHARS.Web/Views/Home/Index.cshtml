@@ -1,0 +1,89 @@
+﻿@model List<MHARS.Web.Models.Alert>
+@{
+    ViewData["Title"] = "MHARS — District Hazard Alerts";
+}
+
+<div class="p-5 mb-4 bg-light rounded-3 border">
+    <h1 class="display-6 fw-bold">Is your district at risk right now?</h1>
+    <p class="lead">One place for flood &amp; earthquake alerts across Bangladesh — with verified shelters and plain-language safety guidance.</p>
+    <a class="btn btn-primary btn-lg" asp-controller="Shelters" asp-action="Index">Find a Shelter</a>
+    <a class="btn btn-outline-primary btn-lg" asp-controller="Earthquakes" asp-action="Index">Live Earthquakes</a>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+        <label class="form-label">District</label>
+        <select name="district" class="form-select" onchange="this.form.submit()">
+            <option value="All">All Districts</option>
+            @foreach (var d in (string[])ViewBag.Districts)
+            {
+                if ((string)ViewBag.SelectedDistrict == d)
+                {
+                    <option value="@d" selected>@d</option>
+                }
+                else
+                {
+                    <option value="@d">@d</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Hazard</label>
+        <select name="hazard" class="form-select" onchange="this.form.submit()">
+            <option value="">All Hazards</option>
+            @if ((MHARS.Web.Models.HazardType?)ViewBag.SelectedHazard == MHARS.Web.Models.HazardType.Flood)
+            {
+                <option value="Flood" selected>Flood</option>
+            }
+            else
+            {
+                <option value="Flood">Flood</option>
+            }
+            @if ((MHARS.Web.Models.HazardType?)ViewBag.SelectedHazard == MHARS.Web.Models.HazardType.Earthquake)
+            {
+                <option value="Earthquake" selected>Earthquake</option>
+            }
+            else
+            {
+                <option value="Earthquake">Earthquake</option>
+            }
+        </select>
+    </div>
+</form>
+
+<h4>Current Alerts @(ViewBag.SelectedDistrict != "All" ? $"for {ViewBag.SelectedDistrict}" : "")</h4>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-success">No active alerts for this selection. ✅ Stay safe.</div>
+}
+else
+{
+    foreach (var alert in Model)
+    {
+        var badge = alert.Severity switch
+        {
+            MHARS.Web.Models.SeverityLevel.High => "danger",
+            MHARS.Web.Models.SeverityLevel.Medium => "warning",
+            _ => "success"
+        };
+        var icon = alert.HazardType == MHARS.Web.Models.HazardType.Flood ? "🌊 Flood" : "🌍 Earthquake";
+        <div class="card mb-2 border-@(badge)">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <span class="badge text-bg-secondary">@icon</span>
+                    <span class="badge text-bg-@badge">@alert.Severity Risk — @alert.District</span>
+                </div>
+                <h5 class="mt-2">@alert.Title</h5>
+                <p class="mb-1">@alert.Message</p>
+                <small class="text-muted">Issued @alert.IssuedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") UTC+6
+                    @if (!string.IsNullOrEmpty(alert.SourceReference))
+                    {
+                        <text> | Source: @alert.SourceReference</text>
+                    }</small>
+                <a class="btn btn-sm btn-outline-secondary float-end" asp-controller="Alerts" asp-action="Details" asp-route-id="@alert.Id">Details</a>
+            </div>
+        </div>
+    }
+}
