@@ -2,63 +2,71 @@
 @{
     ViewData["Title"] = "All Alerts";
 }
-<h2>All Hazard Alerts</h2>
+<div class="page-title">All Hazard Alerts</div>
+<p class="page-subtitle">District-wise flood and earthquake alerts issued by the authority.</p>
 
-<form method="get" class="row g-2 align-items-end mb-3">
-    <div class="col-auto">
-        <label class="form-label">District</label>
-        <select name="district" class="form-select" onchange="this.form.submit()">
-            <option value="All">All Districts</option>
-            @{
-                var selected = ViewBag.Districts != null && ViewBag.SelectedDistrict != null ? (string)ViewBag.SelectedDistrict : "All";
-            }
-            @if (ViewBag.Districts is string[] districts)
-            {
-                @foreach (var d in districts)
+<div class="disaster-panel">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-auto">
+            <label class="form-label">District</label>
+            <select name="district" class="form-select" onchange="this.form.submit()">
+                <option value="All">All Districts</option>
+                @{
+                    var selected = ViewBag.Districts != null && ViewBag.SelectedDistrict != null ? (string)ViewBag.SelectedDistrict : "All";
+                }
+                @if (ViewBag.Districts is string[] districts)
                 {
-                    if (selected == d)
+                    @foreach (var d in districts)
                     {
-                        <option value="@d" selected>@d</option>
-                    }
-                    else
-                    {
-                        <option value="@d">@d</option>
+                        if (selected == d)
+                        {
+                            <option value="@d" selected>@d</option>
+                        }
+                        else
+                        {
+                            <option value="@d">@d</option>
+                        }
                     }
                 }
-            }
-        </select>
+            </select>
+        </div>
+        <div class="col-auto">
+            <a class="btn btn-brand-action" asp-action="Create"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</a>
+        </div>
+    </form>
+</div>
+
+<div class="disaster-panel">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Hazard</th><th>District</th><th>Title</th><th>Severity</th><th>Issued (UTC)</th><th>By</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model)
+                {
+                    var badge = a.Severity switch
+                    {
+                        MHARS.Web.Models.SeverityLevel.High => "danger",
+                        MHARS.Web.Models.SeverityLevel.Medium => "warning",
+                        _ => "success"
+                    };
+                    <tr>
+                        <td>@a.HazardType</td>
+                        <td>@a.District</td>
+                        <td class="fw-semibold">@a.Title</td>
+                        <td><span class="badge text-bg-@badge font-heading">@a.Severity</span></td>
+                        <td>@a.IssuedAt.ToString("dd MMM yyyy hh:mm")</td>
+                        <td>@a.IssuedBy</td>
+                        <td class="text-nowrap">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@a.Id">Edit</a>
+                            <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@a.Id">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
-</form>
-
-<a class="btn btn-primary mb-3" asp-action="Create">Issue New Alert</a>
-
-<table class="table table-hover table-bordered align-middle">
-    <thead class="table-dark">
-        <tr>
-            <th>Hazard</th><th>District</th><th>Title</th><th>Severity</th><th>Issued (UTC)</th><th>By</th><th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var a in Model)
-        {
-            var badge = a.Severity switch
-            {
-                MHARS.Web.Models.SeverityLevel.High => "danger",
-                MHARS.Web.Models.SeverityLevel.Medium => "warning",
-                _ => "success"
-            };
-            <tr>
-                <td>@a.HazardType</td>
-                <td>@a.District</td>
-                <td>@a.Title</td>
-                <td><span class="badge text-bg-@badge">@a.Severity</span></td>
-                <td>@a.IssuedAt.ToString("dd MMM yyyy hh:mm")</td>
-                <td>@a.IssuedBy</td>
-                <td>
-                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@a.Id">Edit</a>
-                    <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@a.Id">Delete</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+</div>

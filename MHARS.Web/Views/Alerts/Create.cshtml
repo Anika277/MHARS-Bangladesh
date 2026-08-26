@@ -2,40 +2,44 @@
 @{
     ViewData["Title"] = "Issue Alert";
 }
-<h2>Issue New Alert</h2>
+<div class="page-title"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</div>
+<p class="page-subtitle">Reference an official BMD/FFWC bulletin when issuing a flood alert.</p>
+
 <div class="row">
     <div class="col-md-6">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="mb-3">
-                <label asp-for="HazardType" class="form-label"></label>
-                <select asp-for="HazardType" class="form-select" asp-items="ViewBag.HazardList"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="District" class="form-label"></label>
-                <select asp-for="District" class="form-select" asp-items="ViewBag.DistrictList"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Severity" class="form-label"></label>
-                <select asp-for="Severity" class="form-select" asp-items="ViewBag.SeverityList"></select>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Title" class="form-label"></label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Message" class="form-label"></label>
-                <textarea asp-for="Message" class="form-control" rows="4"></textarea>
-                <span asp-validation-for="Message" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="SourceReference" class="form-label">Source Reference (e.g., BMD/FFWC bulletin no.)</label>
-                <input asp-for="SourceReference" class="form-control" />
-            </div>
-            <button type="submit" class="btn btn-primary">Issue Alert</button>
-            <a class="btn btn-secondary" asp-action="Index">Cancel</a>
-        </form>
+        <div class="disaster-panel">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="mb-3">
+                    <label asp-for="HazardType" class="form-label"></label>
+                    <select asp-for="HazardType" class="form-select" asp-items="ViewBag.HazardList"></select>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="District" class="form-label"></label>
+                    <select asp-for="District" class="form-select" asp-items="ViewBag.DistrictList"></select>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Severity" class="form-label"></label>
+                    <select asp-for="Severity" class="form-select" asp-items="ViewBag.SeverityList"></select>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Message" class="form-label"></label>
+                    <textarea asp-for="Message" class="form-control" rows="4"></textarea>
+                    <span asp-validation-for="Message" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="SourceReference" class="form-label">Source Reference (e.g., BMD/FFWC bulletin no.)</label>
+                    <input asp-for="SourceReference" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-brand-action"><i class="bi bi-broadcast me-1"></i> Issue Alert</button>
+                <a class="btn btn-secondary" asp-action="Index">Cancel</a>
+            </form>
+        </div>
     </div>
 </div>
 

@@ -6,20 +6,31 @@
         MHARS.Web.Models.SeverityLevel.Medium => "warning",
         _ => "success"
     };
+    var iconClass = Model.HazardType == MHARS.Web.Models.HazardType.Flood ? "bi-water" : "bi-activity";
+    var iconBox = Model.Severity switch
+    {
+        MHARS.Web.Models.SeverityLevel.High => "red",
+        MHARS.Web.Models.SeverityLevel.Medium => "orange",
+        _ => "green"
+    };
     ViewData["Title"] = Model.Title;
 }
-<div class="card border-@badge">
-    <div class="card-header text-bg-@badge">
-        <strong>@Model.Severity Risk — @Model.District (@Model.HazardType)</strong>
+<div class="disaster-panel">
+    <div class="panel-header">
+        <span><i class="bi @iconClass me-1"></i> @Model.Severity Risk — @Model.District (@Model.HazardType)</span>
+        <span class="badge text-bg-@badge font-heading">@Model.Severity</span>
     </div>
-    <div class="card-body">
-        <h4>@Model.Title</h4>
-        <p>@Model.Message</p>
-        @if (!string.IsNullOrEmpty(Model.SourceReference))
-        {
-            <p class="text-muted">Source: @Model.SourceReference</p>
-        }
-        <small class="text-muted">Issued by @(Model.IssuedBy ?? "Authority") on @Model.IssuedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</small>
+    <div class="d-flex align-items-start gap-3">
+        <div class="event-icon-box @iconBox"><i class="bi @iconClass"></i></div>
+        <div>
+            <h4 class="font-heading">@Model.Title</h4>
+            <p>@Model.Message</p>
+            @if (!string.IsNullOrEmpty(Model.SourceReference))
+            {
+                <p class="text-muted mb-1">Source: @Model.SourceReference</p>
+            }
+            <div class="event-meta">Issued by @(Model.IssuedBy ?? "Authority") on @Model.IssuedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</div>
+        </div>
     </div>
 </div>
-<a class="btn btn-secondary mt-3" asp-controller="Home" asp-action="Index">Back to Alerts</a>
+<a class="btn btn-brand-action" asp-controller="Home" asp-action="Index"><i class="bi bi-arrow-left me-1"></i> Back to Alerts</a>
