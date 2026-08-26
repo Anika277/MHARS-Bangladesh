@@ -1,31 +1,681 @@
+/* ══════════════════════════════════════════════════════════
+   MHARS DESIGN SYSTEM (FINAL)
+   Palette: #859096 (SLATE) & #e4e3e3 (LIGHT GRAY)
+   Accent severity colors kept for hazard semantics only.
+══════════════════════════════════════════════════════════ */
+
+:root {
+    /* User-specified exact colors */
+    --color-slate: #859096;
+    --color-slate-dark: #586369;
+    --color-slate-deep: #3C464B;
+    --color-gray-light: #e4e3e3;
+    --color-gray-subtle: #F0F1F2;
+
+    /* Theme tokens (Light Mode) */
+    --brand-nav: #727D83;
+    --brand-nav-hover: #586369;
+    --theme-bg-overlay: linear-gradient(180deg, rgba(228, 227, 227, 0.65) 0%, rgba(240, 241, 242, 0.85) 100%);
+    --surface: rgba(255, 255, 255, 0.95);
+    --surface-solid: #FFFFFF;
+    --surface-subtle: #e4e3e3;
+    --border: #D1D4D6;
+    --text-main: #273036;
+    --text-headings: #1F272C;
+    --text-secondary: #586369;
+    --text-muted: #859096;
+
+    /* Hazard severity (semantic, kept) */
+    --alert-red: #D9383A;
+    --alert-orange: #E67E22;
+    --alert-green: #27AE60;
+
+    --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Dark Mode */
+[data-theme="dark"] {
+    --brand-nav: #343D42;
+    --brand-nav-hover: #48535A;
+    --theme-bg-overlay: linear-gradient(180deg, rgba(20, 25, 28, 0.78) 0%, rgba(28, 35, 39, 0.92) 100%);
+    --surface: rgba(36, 44, 49, 0.94);
+    --surface-solid: #242C31;
+    --surface-subtle: #1C2327;
+    --border: #4A565D;
+    --text-main: #e4e3e3;
+    --text-headings: #FFFFFF;
+    --text-secondary: #B4BEC3;
+    --text-muted: #859096;
+}
+
 html {
-  font-size: 14px;
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+    html {
+        font-size: 16px;
+    }
 }
 
 body {
-  margin-bottom: 60px;
+    background-color: #242C31;
+    background-image: var(--theme-bg-overlay), url('../images/bangladesh_disaster_bg.jpg');
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: var(--text-main);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    margin: 0;
+    margin-bottom: 60px;
+    min-height: 100vh;
+    transition: all 0.2s ease;
+    -webkit-font-smoothing: antialiased;
 }
 
+h1, h2, h3, h4, h5, h6, .font-heading {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--text-headings);
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+}
+
+a {
+    color: var(--color-slate-dark);
+}
+a:hover {
+    color: var(--color-slate-deep);
+}
+[data-theme="dark"] a {
+    color: #B4BEC3;
+}
+
+/* ── Remap Bootstrap blue accents to slate ── */
+.text-primary {
+    color: var(--color-slate-dark) !important;
+}
+.text-info {
+    color: var(--color-slate) !important;
+}
+[data-theme="dark"] .text-primary,
+[data-theme="dark"] .text-info {
+    color: #B4BEC3 !important;
+}
+.btn-primary {
+    background-color: var(--color-slate-dark);
+    border-color: var(--color-slate-dark);
+    color: #FFFFFF;
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+    background-color: var(--color-slate-deep);
+    border-color: var(--color-slate-deep);
+    color: #FFFFFF;
+}
+.btn-outline-primary {
+    color: var(--color-slate-dark);
+    border-color: var(--color-slate);
+}
+.btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active {
+    background-color: var(--color-slate-dark);
+    border-color: var(--color-slate-dark);
+    color: #FFFFFF;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-select:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.15rem rgba(133, 144, 150, 0.35);
+    border-color: var(--color-slate);
+}
+
+/* ── Top utility bar ── */
+.top-utility-bar {
+    background-color: var(--color-slate-deep);
+    color: var(--color-gray-light);
+    font-size: 0.82rem;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 500;
+}
+.top-utility-bar a {
+    color: var(--color-gray-light);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.top-utility-bar a:hover {
+    color: #FFFFFF;
+    text-decoration: underline;
+}
+
+/* ── Main header banner (SLATE) ── */
+.mhars-header {
+    background: linear-gradient(135deg, rgba(133, 144, 150, 0.96) 0%, rgba(88, 99, 105, 0.98) 100%),
+                url('../images/bangladesh_disaster_bg.jpg') center/cover;
+    color: #FFFFFF;
+    padding: 20px 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+[data-theme="dark"] .mhars-header {
+    background: linear-gradient(135deg, rgba(60, 70, 75, 0.96) 0%, rgba(36, 44, 49, 0.98) 100%),
+                url('../images/bangladesh_disaster_bg.jpg') center/cover;
+}
+.brand-title {
+    font-family: var(--font-display);
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: 4px;
+    margin: 0;
+    line-height: 1;
+    color: #FFFFFF;
+}
+.brand-sub {
+    font-size: 0.84rem;
+    color: var(--color-gray-light);
+    margin-top: 4px;
+    font-weight: 400;
+}
+.mission-text-box {
+    font-size: 0.82rem;
+    color: #F8FAFC;
+    line-height: 1.5;
+    border-left: 2px solid rgba(255, 255, 255, 0.4);
+    padding-left: 14px;
+    font-weight: 400;
+}
+
+/* ── Navigation tabs ── */
+.main-nav {
+    background-color: var(--brand-nav);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.12);
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+.main-nav .nav-link {
+    color: #FFFFFF;
+    font-family: var(--font-display);
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    padding: 12px 16px;
+    transition: all 0.15s ease;
+}
+.main-nav .nav-link:hover, .main-nav .nav-link.active {
+    background-color: var(--brand-nav-hover);
+    color: #FFFFFF;
+}
+.main-nav .navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.4);
+}
+.main-nav .dropdown-menu {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-solid);
+}
+.main-nav .dropdown-item {
+    font-size: 0.88rem;
+    color: var(--text-main);
+}
+.main-nav .dropdown-item:hover {
+    background-color: var(--surface-subtle);
+    color: var(--color-slate-deep);
+}
+.theme-toggle-pill {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #FFFFFF;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+.theme-toggle-pill:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.03);
+}
+
+/* ── Panels (cards) ── */
+.disaster-panel {
+    background: var(--surface);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+.panel-header,
+.disaster-panel-header {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--color-slate-dark);
+    border-bottom: 1.5px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+[data-theme="dark"] .panel-header,
+[data-theme="dark"] .disaster-panel-header,
+[data-theme="dark"] .matrix-col-header {
+    color: #B4BEC3;
+}
+.card-inner-box {
+    background-color: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+}
+[data-theme="dark"] .card-inner-box {
+    background-color: var(--surface-subtle);
+}
+
+/* ── News ticker (LIGHT GRAY #e4e3e3) ── */
+.news-ticker-bar {
+    background-color: var(--surface-subtle);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 0;
+    font-size: 0.86rem;
+    color: var(--text-main);
+}
+.news-badge-chevron {
+    background-color: var(--color-slate-dark);
+    color: #FFFFFF;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 4px 14px;
+    clip-path: polygon(0% 0%, 90% 0%, 100% 50%, 90% 100%, 0% 100%);
+    display: inline-block;
+    margin-right: 10px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* ── Hero banner ── */
+.hero-banner,
+.hero-disaster-banner {
+    background: linear-gradient(180deg, rgba(88, 99, 105, 0.90) 0%, rgba(60, 70, 75, 0.96) 100%),
+                url('../images/bangladesh_disaster_bg.jpg') center 35%/cover;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #FFFFFF;
+    padding: 26px 30px;
+    margin-top: 14px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+[data-theme="dark"] .hero-banner,
+[data-theme="dark"] .hero-disaster-banner {
+    background: linear-gradient(180deg, rgba(40, 48, 53, 0.92) 0%, rgba(28, 35, 39, 0.96) 100%),
+                url('../images/bangladesh_disaster_bg.jpg') center 35%/cover;
+    border-color: #4A565D;
+}
+.hero-banner h1, .hero-banner h2, .hero-banner p,
+.hero-disaster-banner h1, .hero-disaster-banner h2, .hero-disaster-banner p {
+    color: #FFFFFF;
+}
+.hero-banner .hero-desc,
+.hero-banner-desc {
+    color: var(--color-gray-light);
+    max-width: 720px;
+    margin-bottom: 16px;
+}
+.hero-banner-title {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 800;
+    margin-top: 8px;
+    margin-bottom: 6px;
+    color: #FFFFFF;
+    letter-spacing: -0.02em;
+}
+
+/* ── Event feed items (alert cards) ── */
+.event-feed-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 10px;
+    border: 1px solid var(--border);
+    border-left-width: 4px;
+    border-radius: 8px;
+    background: var(--surface);
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: var(--text-main);
+    transition: all 0.15s ease;
+}
+.event-feed-item:hover {
+    background-color: var(--surface-subtle);
+    transform: translateX(2px);
+    color: var(--text-main);
+}
+.event-feed-item.sev-high { border-left-color: var(--alert-red); }
+.event-feed-item.sev-medium { border-left-color: var(--alert-orange); }
+.event-feed-item.sev-low { border-left-color: var(--alert-green); }
+
+.event-icon-box {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+    font-size: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+.event-icon-box.green { background-color: var(--alert-green); }
+.event-icon-box.orange { background-color: var(--alert-orange); }
+.event-icon-box.red { background-color: var(--alert-red); }
+.event-icon-box.slate { background-color: var(--color-slate-dark); }
+
+.event-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.98rem;
+    line-height: 1.35;
+    margin-bottom: 3px;
+    color: var(--text-main);
+}
+.event-meta {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* ── Buttons ── */
+.btn-brand-action {
+    background-color: var(--color-slate-dark);
+    color: #FFFFFF !important;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.84rem;
+    padding: 7px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    transition: all 0.15s ease;
+}
+.btn-brand-action:hover {
+    background-color: var(--color-slate-deep);
+    color: #FFFFFF;
+    transform: translateY(-1px);
+}
+
+/* ── Tables ── */
+.table {
+    color: var(--text-main);
+    border-color: var(--border);
+}
+.table thead th {
+    background-color: var(--color-slate-dark);
+    color: #FFFFFF;
+    font-family: var(--font-display);
+    font-weight: 700;
+    border-color: var(--color-slate-deep) !important;
+}
+[data-theme="dark"] .table {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.06);
+    color: #FFFFFF;
+}
+.table > :not(caption) > * > * {
+    background-color: transparent;
+}
+[data-theme="dark"] .list-group-item {
+    background-color: transparent;
+    border-color: var(--border);
+    color: var(--text-main);
+}
+
+/* ── Forms ── */
+.form-label {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+.form-control, .form-select {
+    background-color: var(--surface-solid);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+[data-theme="dark"] .form-control, [data-theme="dark"] .form-select {
+    background-color: var(--surface-subtle);
+    color: #FFFFFF;
+    border-color: var(--border);
+}
+.form-control:focus, .form-select:focus {
+    background-color: var(--surface-solid);
+    color: var(--text-main);
+}
+[data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus {
+    background-color: var(--surface-subtle);
+    color: #FFFFFF;
+}
+
+/* ── Stat cards (Dashboard) ── */
+.stat-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    padding: 18px;
+    text-align: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+    height: 100%;
+}
+.stat-card .stat-value {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 2rem;
+    color: var(--color-slate-dark);
+    line-height: 1.1;
+}
+.stat-card .stat-label {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+.stat-card.stat-red .stat-value { color: var(--alert-red); }
+.stat-card.stat-green .stat-value { color: var(--alert-green); }
+.stat-card.stat-orange .stat-value { color: var(--alert-orange); }
+
+/* ── Guidelines ── */
+.guideline-header {
+    background: var(--color-slate-dark);
+    color: #FFFFFF;
+    font-family: var(--font-display);
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: 8px 8px 0 0;
+}
+
+/* ── Matrix column headers ── */
+.matrix-col-header {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-slate-dark);
+    border-bottom: 2px solid var(--color-slate);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ── GIS map frame ── */
+.gis-map-frame {
+    background: var(--surface);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    position: relative;
+    margin-bottom: 20px;
+}
+#disasterMap {
+    height: 460px;
+    width: 100%;
+    border-radius: 9px 9px 0 0;
+    z-index: 1;
+}
+.map-triage-overlay {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 1000;
+    background: var(--surface);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    width: 290px;
+    color: var(--text-main);
+}
+@media (max-width: 768px) {
+    .map-triage-overlay {
+        position: static;
+        width: 100%;
+        margin-top: 10px;
+        box-shadow: none;
+    }
+    #disasterMap {
+        height: 300px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE SIMULATION (phone frame)
+══════════════════════════════════════════════════════════ */
+.view-frame-wrapper {
+    transition: all 0.3s ease;
+    margin: 0 auto;
+}
+.view-frame-wrapper.mobile-mode {
+    max-width: 410px;
+    border: 12px solid #3C464B;
+    border-radius: 44px;
+    padding: 0;
+    background: var(--surface-solid);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+    margin: 20px auto 40px auto;
+    overflow: hidden;
+    position: relative;
+}
+.view-frame-wrapper.mobile-mode .hero-disaster-banner,
+.view-frame-wrapper.mobile-mode .disaster-panel,
+.view-frame-wrapper.mobile-mode .gis-map-frame {
+    margin-left: 10px;
+    margin-right: 10px;
+    padding: 16px;
+    border-radius: 12px;
+}
+.view-frame-wrapper.mobile-mode .hero-banner-title {
+    font-size: 1.25rem;
+}
+.view-frame-wrapper.mobile-mode #disasterMap {
+    height: 260px !important;
+}
+.view-frame-wrapper.mobile-mode .map-triage-overlay {
+    position: static;
+    width: 100%;
+    margin-top: 10px;
+    box-shadow: none;
+}
+.phone-status-notch {
+    display: none;
+    background: #3C464B;
+    color: #FFFFFF;
+    padding: 8px 18px 4px 18px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    justify-content: space-between;
+    align-items: center;
+}
+.view-frame-wrapper.mobile-mode .phone-status-notch {
+    display: flex;
+}
+
+/* ── Footer ── */
+.mhars-footer {
+    background-color: var(--color-slate-deep);
+    color: var(--color-gray-light);
+    font-size: 0.85rem;
+    padding: 24px 0;
+    border-top: 2px solid var(--brand-nav);
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+.mhars-footer a {
+    color: var(--color-gray-light);
+}
+.mhars-footer .footer-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: #FFFFFF;
+}
+.view-frame-wrapper.mobile-mode ~ .mhars-footer {
+    display: none;
+}
+
+/* ── Page title strip ── */
+.page-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--text-headings);
+    margin-bottom: 4px;
+}
+.page-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    margin-bottom: 18px;
+}
+
+/* ── Validation / placeholders ── */
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+    color: var(--text-muted);
+    text-align: end;
 }
-
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+    text-align: start;
+}
+.field-validation-error, .validation-summary-errors {
+    color: var(--alert-red);
+}
+.validation-summary-errors ul {
+    margin-bottom: 0;
 }

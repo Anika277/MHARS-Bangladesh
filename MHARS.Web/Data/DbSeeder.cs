@@ -45,6 +45,17 @@ public static class DbSeeder
             );
         }
 
+        if (!await db.Alerts.AnyAsync())
+        {
+            db.Alerts.AddRange(
+                new Alert { HazardType = HazardType.Flood, District = "Sirajganj", Title = "Jamuna River Inundation", Message = "Water level at Jamuna River Sirajganj point is 13.83m (+48cm over danger mark). Embankment seepage reported at Kazipur and Belkuchi. Residents of char areas are advised to relocate to the nearest shelter.", Severity = SeverityLevel.High, SourceReference = "FFWC Bulletin #48", IssuedBy = "Authority" },
+                new Alert { HazardType = HazardType.Flood, District = "Kurigram", Title = "Brahmaputra Overflow", Message = "Brahmaputra at Chilmari flowing +52cm above danger level. Chilmari and Nageshwari lowlands flooded across 15 unions. Safe drinking water tube-wells submerged.", Severity = SeverityLevel.High, SourceReference = "FFWC Bulletin #47", IssuedBy = "Authority" },
+                new Alert { HazardType = HazardType.Earthquake, District = "Sylhet", Title = "M 4.6 Seismic Tremor", Message = "Epicenter 38km ESE of Sylhet at 12.4km depth. Tremor felt across Sylhet city. No damage reported. Aftershocks possible.", Severity = SeverityLevel.Medium, SourceReference = "USGS", IssuedBy = "USGS Auto" },
+                new Alert { HazardType = HazardType.Flood, District = "Sunamganj", Title = "Surma River Surge", Message = "Surma River rising +12cm in 4 hours due to Meghalaya runoff. Haor basin residents advised to stay alert.", Severity = SeverityLevel.Medium, SourceReference = "FFWC Bulletin #46", IssuedBy = "Authority" },
+                new Alert { HazardType = HazardType.Flood, District = "Dhaka", Title = "Normal Baseline", Message = "Buriganga & Turag rivers within normal seasonal limits. No action required.", Severity = SeverityLevel.Low, SourceReference = "FFWC", IssuedBy = "Authority" }
+            );
+        }
+
         if (!await db.SafetyGuidelines.AnyAsync())
         {
             db.SafetyGuidelines.AddRange(

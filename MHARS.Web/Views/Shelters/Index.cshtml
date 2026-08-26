@@ -2,39 +2,41 @@
 @{
     ViewData["Title"] = "Shelter Directory";
 }
-<h2>Shelter Directory</h2>
-<p class="text-muted">Search verified shelters by district or name.</p>
+<div class="page-title"><i class="bi bi-house-door-fill me-1"></i> Shelter Directory</div>
+<p class="page-subtitle">Search verified shelters by district or name.</p>
 
-<form method="get" class="row g-2 align-items-end mb-3">
-    <div class="col-md-4">
-        <label class="form-label">Search</label>
-        <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Name or address..." />
-    </div>
-    <div class="col-auto">
-        <label class="form-label">District</label>
-        <select name="district" class="form-select" onchange="this.form.submit()">
-            <option value="All">All Districts</option>
-            @foreach (var d in MHARS.Web.Models.Districts.List)
+<div class="disaster-panel">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Search</label>
+            <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Name or address..." />
+        </div>
+        <div class="col-auto">
+            <label class="form-label">District</label>
+            <select name="district" class="form-select" onchange="this.form.submit()">
+                <option value="All">All Districts</option>
+                @foreach (var d in MHARS.Web.Models.Districts.List)
+                {
+                    if ((string)ViewBag.SelectedDistrict == d)
+                    {
+                        <option value="@d" selected>@d</option>
+                    }
+                    else
+                    {
+                        <option value="@d">@d</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-brand-action"><i class="bi bi-search me-1"></i> Search</button>
+            @if (User.IsInRole("Admin"))
             {
-                if ((string)ViewBag.SelectedDistrict == d)
-                {
-                    <option value="@d" selected>@d</option>
-                }
-                else
-                {
-                    <option value="@d">@d</option>
-                }
+                <a class="btn btn-success" asp-action="Create"><i class="bi bi-plus-circle me-1"></i> Add Shelter</a>
             }
-        </select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-primary">Search</button>
-        @if (User.IsInRole("Admin"))
-        {
-            <a class="btn btn-success" asp-action="Create">Add Shelter</a>
-        }
-    </div>
-</form>
+        </div>
+    </form>
+</div>
 
 @if (!Model.Any())
 {
@@ -42,28 +44,41 @@
 }
 else
 {
-    <table class="table table-hover table-bordered align-middle">
-        <thead class="table-dark">
-            <tr><th>Name</th><th>District</th><th>Address</th><th>Capacity</th><th>Contact</th>@if (User.IsInRole("Admin")) { <th></th> }</tr>
-        </thead>
-        <tbody>
-            @foreach (var s in Model)
-            {
-                <tr>
-                    <td class="fw-bold">@s.Name</td>
-                    <td>@s.District</td>
-                    <td>@s.Address</td>
-                    <td>@s.Capacity.ToString("N0") people</td>
-                    <td>@(string.IsNullOrEmpty(s.ContactNumber) ? "-" : s.ContactNumber)</td>
-                    @if (User.IsInRole("Admin"))
+    <div class="disaster-panel">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr><th>Name</th><th>District</th><th>Address</th><th>Capacity</th><th>Contact</th>@if (User.IsInRole("Admin")) { <th></th> }</tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model)
                     {
-                        <td>
-                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@s.Id">Edit</a>
-                            <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@s.Id">Delete</a>
-                        </td>
+                        <tr>
+                            <td class="fw-bold">@s.Name</td>
+                            <td>@s.District</td>
+                            <td>@s.Address</td>
+                            <td>@s.Capacity.ToString("N0") people</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(s.ContactNumber))
+                                {
+                                    <a href="tel:@s.ContactNumber" class="btn-brand-action"><i class="bi bi-telephone-fill me-1"></i> @s.ContactNumber</a>
+                                }
+                                else
+                                {
+                                    <text>-</text>
+                                }
+                            </td>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <td class="text-nowrap">
+                                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@s.Id">Edit</a>
+                                    <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@s.Id">Delete</a>
+                                </td>
+                            }
+                        </tr>
                     }
-                </tr>
-            }
-        </tbody>
-    </table>
+                </tbody>
+            </table>
+        </div>
+    </div>
 }

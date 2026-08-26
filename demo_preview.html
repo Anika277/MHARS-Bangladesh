@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MHARS — Multi-Hazard Early Alert & Response System (Bangladesh)</title>
+    <!-- EM-DAT Style Clean Typography: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Leaflet.js Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        /* ══════════════════════════════════════════════════════════
+           MHARS PALETTE: #859096 (SLATE) & #e4e3e3 (LIGHT GRAY)
+        ══════════════════════════════════════════════════════════ */
+        
+        :root {
+            /* User Specified Exact Colors */
+            --color-slate: #859096;
+            --color-slate-dark: #586369;
+            --color-slate-deep: #3C464B;
+            --color-gray-light: #e4e3e3;
+            --color-gray-subtle: #F0F1F2;
+            
+            /* Theme Tokens (Light Mode) */
+            --brand-primary: #859096;
+            --brand-primary-dark: #586369;
+            --brand-nav: #727D83;
+            --brand-nav-hover: #586369;
+            
+            --theme-bg-overlay: linear-gradient(180deg, rgba(228, 227, 227, 0.65) 0%, rgba(240, 241, 242, 0.85) 100%);
+            --theme-surface: rgba(255, 255, 255, 0.95);
+            --theme-surface-solid: #FFFFFF;
+            --theme-surface-subtle: #e4e3e3;
+            --theme-border: #D1D4D6;
+            
+            --theme-text-main: #273036;
+            --theme-text-headings: #1F272C;
+            --theme-text-secondary: #586369;
+            --theme-text-muted: #859096;
+
+            --theme-card-inner: #FFFFFF;
+            --theme-input-bg: #FFFFFF;
+            --theme-input-border: #D1D4D6;
+
+            /* Keep palette strict: remap Bootstrap blue accents to slate tones */
+        .text-primary { color: var(--color-slate-dark) !important; }
+        .text-info { color: var(--color-slate) !important; }
+        [data-theme="dark"] .text-primary { color: #B4BEC3 !important; }
+        [data-theme="dark"] .text-info { color: #B4BEC3 !important; }
+
+        /* Hazard Levels */
+            --alert-red: #D9383A;
+            --alert-orange: #E67E22;
+            --alert-green: #27AE60;
+
+            --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        /* Dark Mode Option */
+        [data-theme="dark"] {
+            --brand-primary: #859096;
+            --brand-primary-dark: #2A3237;
+            --brand-nav: #343D42;
+            --brand-nav-hover: #48535A;
+            
+            --theme-bg-overlay: linear-gradient(180deg, rgba(20, 25, 28, 0.78) 0%, rgba(28, 35, 39, 0.92) 100%);
+            --theme-surface: rgba(36, 44, 49, 0.94);
+            --theme-surface-solid: #242C31;
+            --theme-surface-subtle: #1C2327;
+            --theme-border: #4A565D;
+            
+            --theme-text-main: #e4e3e3;
+            --theme-text-headings: #FFFFFF;
+            --theme-text-secondary: #B4BEC3;
+            --theme-text-muted: #859096;
+
+            --theme-card-inner: #1C2327;
+            --theme-input-bg: #1C2327;
+            --theme-input-border: #4A565D;
+        }
+
+        body {
+            background-color: #242C31;
+            background-image: var(--theme-bg-overlay), url('bangladesh_disaster_bg.jpg');
+            background-size: cover;
+            background-position: center top;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: var(--theme-text-main);
+            font-family: var(--font-body);
+            font-size: 0.94rem;
+            line-height: 1.6;
+            margin: 0;
+            padding-bottom: 70px;
+            min-height: 100vh;
+            transition: all 0.2s ease;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4, h5, h6, .font-heading {
+            font-family: var(--font-display);
+            font-weight: 700;
+            color: var(--theme-text-headings);
+            letter-spacing: -0.02em;
+            line-height: 1.3;
+        }
+
+        /* Top Utility Bar */
+        .top-utility-bar {
+            background-color: var(--color-slate-deep);
+            color: #e4e3e3;
+            font-size: 0.82rem;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 500;
+        }
+
+        .top-utility-bar a {
+            color: #e4e3e3;
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+        .top-utility-bar a:hover {
+            color: #FFFFFF;
+            text-decoration: underline;
+        }
+
+        /* Theme Toggle Pill */
+        .theme-toggle-pill {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #FFFFFF;
+            border-radius: 20px;
+            padding: 3px 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            font-family: var(--font-display);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .theme-toggle-pill:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.03);
+        }
+
+        /* Main Header Banner styled with #859096 Slate Palette */
+        .gdacs-header {
+            background: linear-gradient(135deg, rgba(133, 144, 150, 0.96) 0%, rgba(88, 99, 105, 0.98) 100%),
+                        url('bangladesh_disaster_bg.jpg') center/cover;
+            color: #FFFFFF;
+            padding: 20px 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        [data-theme="dark"] .gdacs-header {
+            background: linear-gradient(135deg, rgba(60, 70, 75, 0.96) 0%, rgba(36, 44, 49, 0.98) 100%),
+                        url('bangladesh_disaster_bg.jpg') center/cover;
+        }
+
+        .brand-title {
+            font-family: var(--font-display);
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: 4px;
+            margin: 0;
+            line-height: 1;
+            color: #FFFFFF;
+        }
+
+        .brand-sub {
+            font-size: 0.84rem;
+            color: #e4e3e3;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .mission-text-box {
+            font-size: 0.82rem;
+            color: #F8FAFC;
+            line-height: 1.5;
+            border-left: 2px solid rgba(255, 255, 255, 0.4);
+            padding-left: 14px;
+            font-weight: 400;
+        }
+
+        /* Navigation Bar */
+        .main-nav {
+            background-color: var(--brand-nav);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.12);
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tab-btn {
+            color: #FFFFFF;
+            font-family: var(--font-display);
+            font-size: 0.88rem;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+        }
+        .nav-tab-btn:hover, .nav-tab-btn.active {
+            background-color: var(--brand-nav-hover);
+            color: #FFFFFF;
+        }
+
+        /* Breaking News Ticker */
+        .news-ticker-bar {
+            background-color: var(--theme-surface-subtle);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--theme-border);
+            padding: 8px 0;
+            font-size: 0.86rem;
+            color: var(--theme-text-main);
+        }
+
+        .news-badge-chevron {
+            background-color: var(--color-slate-dark);
+            color: #FFFFFF;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.78rem;
+            padding: 4px 14px;
+            clip-path: polygon(0% 0%, 90% 0%, 100% 50%, 90% 100%, 0% 100%);
+            display: inline-block;
+            margin-right: 10px;
+            text-transform: uppercase;
+        }
+
+        /* Prominent Hero Disaster Banner */
+        .hero-disaster-banner {
+            background: linear-gradient(180deg, rgba(88, 99, 105, 0.90) 0%, rgba(60, 70, 75, 0.96) 100%),
+                        url('bangladesh_disaster_bg.jpg') center 35%/cover;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #FFFFFF;
+            padding: 26px 30px;
+            margin-top: 14px;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+        }
+        [data-theme="dark"] .hero-disaster-banner {
+            background: linear-gradient(180deg, rgba(40, 48, 53, 0.92) 0%, rgba(28, 35, 39, 0.96) 100%),
+                        url('bangladesh_disaster_bg.jpg') center 35%/cover;
+            border-color: #4A565D;
+        }
+
+        .hero-banner-title {
+            font-family: var(--font-display);
+            font-size: 1.7rem;
+            font-weight: 800;
+            margin-top: 8px;
+            margin-bottom: 6px;
+            color: #FFFFFF;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-banner-desc {
+            font-size: 0.94rem;
+            color: #e4e3e3;
+            max-width: 720px;
+            margin-bottom: 16px;
+            line-height: 1.55;
+            font-weight: 400;
+        }
+
+        /* Glass Disaster Panels */
+        .disaster-panel {
+            background: var(--theme-surface);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--theme-border);
+            border-radius: 10px;
+            padding: 20px 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            transition: all 0.25s ease;
+        }
+
+        .disaster-panel-header {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--color-slate-dark);
+            border-bottom: 1.5px solid var(--theme-border);
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        [data-theme="dark"] .disaster-panel-header {
+            color: #B4BEC3;
+        }
+
+        /* Form Controls */
+        .form-select, .form-control {
+            background-color: var(--theme-input-bg);
+            color: var(--theme-text-main);
+            border: 1px solid var(--theme-input-border);
+        }
+        [data-theme="dark"] .form-select, [data-theme="dark"] .form-control {
+            background-color: var(--theme-surface-subtle);
+            color: #FFFFFF;
+            border-color: var(--theme-border);
+        }
+
+        /* Card inners */
+        .card-inner-box {
+            background-color: var(--theme-card-inner);
+            border: 1px solid var(--theme-border);
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        /* Matrix Headers */
+        .matrix-col-header {
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--color-slate-dark);
+            border-bottom: 2px solid var(--color-slate);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        [data-theme="dark"] .matrix-col-header {
+            color: #B4BEC3;
+            border-bottom-color: #859096;
+        }
+
+        .event-feed-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--theme-border);
+            text-decoration: none;
+            color: var(--theme-text-main);
+            transition: all 0.15s ease;
+            border-radius: 6px;
+        }
+        .event-feed-item:hover {
+            background-color: var(--theme-surface-subtle);
+            transform: translateX(2px);
+            color: var(--theme-text-main);
+        }
+        .event-feed-item:last-child {
+            border-bottom: none;
+        }
+
+        .event-icon-box {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-size: 1rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+        }
+        .event-icon-box.green { background-color: var(--alert-green); }
+        .event-icon-box.orange { background-color: var(--alert-orange); }
+        .event-icon-box.red { background-color: var(--alert-red); }
+
+        .event-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.92rem;
+            line-height: 1.35;
+            margin-bottom: 3px;
+            color: var(--theme-text-main);
+        }
+
+        .event-meta {
+            font-size: 0.8rem;
+            color: var(--theme-text-secondary);
+            font-weight: 400;
+        }
+
+        /* Buttons in #859096 Palette */
+        .btn-brand-action {
+            background-color: var(--color-slate-dark);
+            color: #FFFFFF !important;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 0.82rem;
+            padding: 7px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            transition: all 0.15s ease;
+        }
+        .btn-brand-action:hover {
+            background-color: var(--color-slate-deep);
+            transform: translateY(-1px);
+        }
+
+        /* Water level gauge meter */
+        .water-gauge-bar {
+            height: 10px;
+            background-color: var(--theme-border);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 6px;
+            margin-bottom: 4px;
+        }
+        .gauge-fill {
+            height: 100%;
+            border-radius: 5px;
+        }
+        .gauge-fill.red { background: linear-gradient(90deg, #F59E0B, #D9383A); }
+        .gauge-fill.orange { background: linear-gradient(90deg, #10B981, #E67E22); }
+
+        /* Map styling */
+        .gis-map-frame {
+            background: var(--theme-surface);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--theme-border);
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        #disasterMap {
+            height: 460px;
+            width: 100%;
+            border-radius: 9px 9px 0 0;
+        }
+
+        .map-triage-overlay {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 1000;
+            background: var(--theme-surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--theme-border);
+            border-radius: 8px;
+            padding: 14px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            width: 290px;
+            color: var(--theme-text-main);
+        }
+
+        /* Tables for Dark/Light Mode */
+        .table {
+            color: var(--theme-text-main);
+            border-color: var(--theme-border);
+        }
+        [data-theme="dark"] .table {
+            --bs-table-bg: transparent;
+            --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+            --bs-table-hover-bg: rgba(255, 255, 255, 0.06);
+            color: #FFFFFF;
+        }
+
+        /* List Groups */
+        .list-group-item {
+            color: var(--theme-text-main);
+            border-color: var(--theme-border);
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           MOBILE SIMULATION & RESPONSIVE LAYOUT
+        ══════════════════════════════════════════════════════════ */
+        
+        .view-frame-wrapper {
+            transition: all 0.3s ease;
+            margin: 0 auto;
+        }
+
+        /* Mobile Simulation Wrapper (Phone Frame) */
+        .view-frame-wrapper.mobile-mode {
+            max-width: 410px;
+            border: 12px solid #3C464B;
+            border-radius: 44px;
+            padding: 0;
+            background: var(--theme-surface-solid);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+            margin: 20px auto 40px auto;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Phone Top Notch Bar */
+        .phone-status-notch {
+            display: none;
+            background: #3C464B;
+            color: #FFFFFF;
+            padding: 8px 18px 4px 18px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .view-frame-wrapper.mobile-mode .phone-status-notch {
+            display: flex;
+        }
+
+        /* Inside Mobile Mode: Columns Stack 100% Full Width */
+        .view-frame-wrapper.mobile-mode .row > [class*="col-"] {
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            margin-bottom: 12px;
+        }
+
+        .view-frame-wrapper.mobile-mode .hero-disaster-banner {
+            padding: 18px;
+            margin: 10px;
+            border-radius: 12px;
+        }
+        .view-frame-wrapper.mobile-mode .hero-banner-title {
+            font-size: 1.25rem;
+        }
+
+        .view-frame-wrapper.mobile-mode .disaster-panel {
+            margin: 10px;
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .view-frame-wrapper.mobile-mode #disasterMap {
+            height: 260px !important;
+        }
+
+        .view-frame-wrapper.mobile-mode .map-triage-overlay {
+            position: static;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: none;
+            border: 1px solid var(--theme-border);
+        }
+
+        /* Mobile Bottom Tab Bar */
+        .mobile-bottom-bar {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--theme-surface-solid);
+            border-top: 1px solid var(--theme-border);
+            z-index: 1050;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-bottom-bar {
+                display: flex;
+                justify-content: space-around;
+            }
+            body {
+                padding-bottom: 75px;
+            }
+            .map-triage-overlay {
+                position: static;
+                width: 100%;
+                margin-top: 10px;
+                box-shadow: none;
+            }
+            #disasterMap {
+                height: 300px;
+            }
+        }
+
+        .view-frame-wrapper.mobile-mode .mobile-bottom-bar {
+            display: flex;
+            justify-content: space-around;
+            position: sticky;
+            bottom: 0;
+            background: var(--theme-surface-solid);
+            border-top: 1px solid var(--theme-border);
+            z-index: 100;
+        }
+
+        .mobile-tab-item {
+            color: var(--theme-text-muted);
+            font-family: var(--font-display);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 8px 12px;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .mobile-tab-item.active, .mobile-tab-item:hover {
+            color: var(--color-slate-dark);
+        }
+        [data-theme="dark"] .mobile-tab-item.active {
+            color: #FFFFFF;
+        }
+
+        /* Footer */
+        .gdacs-footer {
+            background-color: var(--color-slate-deep);
+            color: #e4e3e3;
+            font-size: 0.85rem;
+            padding: 30px 0;
+            border-top: 2px solid var(--brand-nav);
+            margin-top: 40px;
+        }
+        .view-frame-wrapper.mobile-mode .gdacs-footer {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP UTILITY BAR -->
+    <div class="top-utility-bar">
+        <div class="container-xl px-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span><i class="bi bi-clock me-1"></i> <span id="liveClock">--:--:-- BST (UTC+6)</span></span>
+                    <span class="ms-3 d-none d-sm-inline"><i class="bi bi-shield-check text-success me-1"></i> FFWC · BMD · USGS Network</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="tel:999" class="text-warning fw-semibold"><i class="bi bi-telephone-fill"></i> 999 Emergency</a>
+                    <a href="tel:1090" class="text-light fw-semibold d-none d-sm-inline"><i class="bi bi-shield-fill"></i> 1090 Disaster</a>
+                    <!-- Theme Toggle -->
+                    <button class="theme-toggle-pill" onclick="toggleTheme()">
+                        <span id="themePillIcon">🌙</span> <span id="themeLabel">Dark Mode</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER (COLOR #859096) -->
+    <header class="gdacs-header">
+        <div class="container-xl px-3">
+            <div class="row align-items-center g-3">
+                <div class="col-12 col-md-5">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="fs-1">🌊</div>
+                        <div>
+                            <h1 class="brand-title">M H A R S</h1>
+                            <div class="brand-sub">Multi-Hazard Alert &amp; Response System — Bangladesh</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 d-none d-md-block">
+                    <div class="mission-text-box">
+                        MHARS is a public disaster warning framework connecting <strong>Flood Forecasting and Warning Centre (FFWC)</strong>, <strong>Bangladesh Meteorological Department (BMD)</strong>, and <strong>USGS Earthquake Hazards Program</strong>.
+                    </div>
+                </div>
+                <div class="col-12 col-md-3 text-md-end">
+                    <span class="badge bg-danger p-2 font-heading fw-bold shadow-sm"><i class="bi bi-exclamation-triangle-fill"></i> Jamuna River: +48cm Red Alert</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- RESPONSIVE NAVIGATION TABS -->
+    <nav class="main-nav">
+        <div class="container-xl px-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <div class="d-flex flex-wrap">
+                    <button class="nav-tab-btn active" onclick="switchPage('homePage')"><i class="bi bi-globe-americas"></i> Live Radar</button>
+                    <button class="nav-tab-btn" onclick="switchPage('floodPage')"><i class="bi bi-water"></i> River Floods</button>
+                    <button class="nav-tab-btn" onclick="switchPage('quakePage')"><i class="bi bi-activity"></i> Earthquakes</button>
+                    <button class="nav-tab-btn" onclick="switchPage('shelterPage')"><i class="bi bi-house-door-fill"></i> Shelters</button>
+                    <button class="nav-tab-btn" onclick="switchPage('guidelinePage')"><i class="bi bi-shield-check"></i> Safety Guidance</button>
+                    <button class="nav-tab-btn" onclick="switchPage('adminPage')"><i class="bi bi-gear-fill"></i> Admin Portal</button>
+                </div>
+                <!-- Device Viewport Toggle & Theme Toggle -->
+                <div class="d-flex align-items-center gap-2 py-1">
+                    <button class="btn btn-sm btn-outline-light fw-bold py-1 px-2" onclick="toggleTheme()" title="Switch Light/Dark Theme">
+                        <i class="bi bi-sun-fill" id="themeNavIcon"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light fw-bold py-1 px-3 shadow-sm" onclick="toggleDeviceMode()">
+                        <i class="bi bi-phone me-1"></i> <span id="deviceBtnText">Mobile App Simulator</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- BREAKING NEWS TICKER (COLOR #e4e3e3) -->
+    <div class="news-ticker-bar">
+        <div class="container-xl px-3">
+            <div class="d-flex align-items-center">
+                <span class="news-badge-chevron">Latest Alerts</span>
+                <marquee behavior="scroll" direction="left" scrollamount="6" class="fw-semibold" id="newsTicker">
+                    🔴 Flood Red Alert: Jamuna River surging +48cm above danger level at Kazipur &amp; Sirajganj Sadar | 🔴 Kurigram: Brahmaputra River overflowing at Chilmari (+52cm) | 🟡 Sylhet: M 4.6 Seismic Tremor recorded (12.4km depth, USGS) | 🏠 8 Verified Multi-Purpose Shelters Open with Power &amp; Water
+                </marquee>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN VIEWPORT CONTAINER -->
+    <div class="container-xl px-3 mt-2 view-frame-wrapper" id="viewWrapper">
+
+        <!-- PHONE TOP NOTCH (VISIBLE IN MOBILE SIMULATION MODE) -->
+        <div class="phone-status-notch">
+            <span>09:41</span>
+            <div class="d-flex align-items-center gap-2">
+                <span role="button" onclick="toggleTheme()" class="me-2" style="cursor: pointer;"><i class="bi bi-circle-half"></i></span>
+                <i class="bi bi-wifi"></i>
+                <i class="bi bi-battery-full"></i>
+            </div>
+        </div>
+
+        <!-- =========================================================================
+             PAGE 1: LIVE RADAR & NATIONAL OVERVIEW (HOME)
+        ========================================================================= -->
+        <div id="homePage" class="app-page-view">
+            
+            <!-- PROMINENT DISASTER SHOWCASE BANNER -->
+            <div class="hero-disaster-banner">
+                <div class="row align-items-center g-3">
+                    <div class="col-12 col-lg-8">
+                        <span class="badge bg-danger font-heading text-uppercase px-2 py-1 mb-2">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Live Inundation Watch
+                        </span>
+                        <h2 class="hero-banner-title">Bangladesh River Basin &amp; Seismic Early Warning Portal</h2>
+                        <p class="hero-banner-desc">
+                            Real-time consolidation of Brahmaputra/Jamuna river basin surge levels, USGS Indo-Burma faultline seismographs, verified multi-purpose cyclone/flood shelters, and emergency survival directives.
+                        </p>
+                        <div class="d-flex flex-wrap gap-2 small">
+                            <span class="badge bg-dark bg-opacity-75 border border-light-subtle px-3 py-2 fw-medium">
+                                <i class="bi bi-water text-danger me-1"></i> Jamuna: +48cm Danger Level
+                            </span>
+                            <span class="badge bg-dark bg-opacity-75 border border-light-subtle px-3 py-2 fw-medium">
+                                <i class="bi bi-cloud-rain-heavy text-info me-1"></i> Brahmaputra: High Inundation
+                            </span>
+                            <span class="badge bg-dark bg-opacity-75 border border-light-subtle px-3 py-2 fw-medium">
+                                <i class="bi bi-activity text-warning me-1"></i> Seismic: M 4.6 Indo-Burma Arc
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-4 text-lg-end">
+                        <div class="p-3 rounded bg-dark bg-opacity-75 border border-light-subtle text-start small">
+                            <div class="text-white-50 small mb-1 font-heading fw-semibold"><i class="bi bi-telephone-outbound text-danger me-1"></i> Emergency Operations:</div>
+                            <a href="tel:999" class="btn btn-danger btn-sm w-100 fw-bold mb-2 font-heading">
+                                <i class="bi bi-telephone-fill"></i> Call 999 National Emergency
+                            </a>
+                            <a href="tel:1090" class="btn btn-warning btn-sm w-100 fw-bold font-heading text-dark">
+                                <i class="bi bi-shield-fill"></i> Call 1090 Disaster Helpline
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE GEOSPATIAL MAP -->
+            <div class="gis-map-frame">
+                <div id="disasterMap"></div>
+                
+                <!-- Floating Triage Dropdown Overlay -->
+                <div class="map-triage-overlay">
+                    <label class="form-label small fw-bold mb-1 font-heading"><i class="bi bi-search me-1"></i> District Hazard Triage</label>
+                    <select id="districtSelect" class="form-select form-select-sm mb-2 font-heading fw-semibold" onchange="onDistrictChange(this.value)">
+                        <option value="All">All Bangladesh (Overview)</option>
+                        <option value="Sirajganj" selected>Sirajganj (🔴 Red Flood)</option>
+                        <option value="Kurigram">Kurigram (🔴 Red Flood)</option>
+                        <option value="Sylhet">Sylhet (🟡 Orange Quake)</option>
+                        <option value="Sunamganj">Sunamganj (🟡 Orange Flood)</option>
+                        <option value="Dhaka">Dhaka (🟢 Green Clear)</option>
+                    </select>
+
+                    <div class="d-grid">
+                        <button class="btn btn-sm btn-outline-secondary font-heading fw-semibold" style="font-size: 0.8rem;" onclick="resetMap()">
+                            <i class="bi bi-arrows-fullscreen"></i> Reset National View
+                        </button>
+                    </div>
+                </div>
+
+                <!-- GDACS Map Legend -->
+                <div class="p-2 px-3 border-top d-flex flex-wrap justify-content-between align-items-center gap-2 small" style="background: var(--theme-surface-subtle); border-radius: 0 0 9px 9px;">
+                    <div class="d-flex align-items-center gap-3 font-heading fw-semibold">
+                        <span class="text-muted">Alert Levels:</span>
+                        <span class="text-danger"><i class="bi bi-circle-fill"></i> Red (Critical)</span>
+                        <span class="text-warning-emphasis"><i class="bi bi-circle-fill"></i> Orange (Moderate)</span>
+                        <span class="text-success"><i class="bi bi-circle-fill"></i> Green (Clear)</span>
+                    </div>
+                    <div class="d-none d-md-flex align-items-center gap-3 text-muted">
+                        <span><i class="bi bi-water text-primary"></i> Floods: FFWC</span>
+                        <span><i class="bi bi-activity text-warning"></i> Earthquakes: USGS</span>
+                        <span><i class="bi bi-house-door-fill text-success"></i> Shelters: Verified</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MULTI-COLUMN DISASTER MATRIX -->
+            <div class="disaster-panel">
+                <div class="row g-4">
+                    
+                    <!-- COLUMN 1: EARTHQUAKES (USGS FEED) -->
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="matrix-col-header">
+                            <span><i class="bi bi-activity me-1"></i> Earthquakes (USGS)</span>
+                            <span class="badge bg-secondary font-body fw-normal">3 events</span>
+                        </div>
+
+                        <a href="https://earthquake.usgs.gov" target="_blank" class="event-feed-item">
+                            <div class="event-icon-box orange"><i class="bi bi-activity"></i></div>
+                            <div>
+                                <div class="event-title">Sylhet Region (M 4.6)</div>
+                                <div class="event-meta">Depth: 12.4 km · 26 Aug 04:12 BST</div>
+                            </div>
+                        </a>
+
+                        <a href="https://earthquake.usgs.gov" target="_blank" class="event-feed-item">
+                            <div class="event-icon-box red"><i class="bi bi-activity"></i></div>
+                            <div>
+                                <div class="event-title">Myanmar Border / Ctg (M 5.4)</div>
+                                <div class="event-meta">Depth: 45.0 km · 26 Aug 06:18 BST</div>
+                            </div>
+                        </a>
+
+                        <a href="https://earthquake.usgs.gov" target="_blank" class="event-feed-item">
+                            <div class="event-icon-box green"><i class="bi bi-activity"></i></div>
+                            <div>
+                                <div class="event-title">Assam-Rangpur Border (M 3.8)</div>
+                                <div class="event-meta">Depth: 10.0 km · 25 Aug 22:45 BST</div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- COLUMN 2: FLOOD INUNDATION (FFWC BULLETINS) -->
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="matrix-col-header">
+                            <span><i class="bi bi-water me-1"></i> River Floods (FFWC)</span>
+                            <span class="badge bg-secondary font-body fw-normal">4 bulletins</span>
+                        </div>
+
+                        <div class="event-feed-item" role="button" onclick="focusDistrict('Sirajganj')">
+                            <div class="event-icon-box red"><i class="bi bi-water"></i></div>
+                            <div>
+                                <div class="event-title text-danger">Sirajganj — Jamuna Basin</div>
+                                <div class="event-meta">+48cm Danger · Bulletin #48</div>
+                            </div>
+                        </div>
+
+                        <div class="event-feed-item" role="button" onclick="focusDistrict('Kurigram')">
+                            <div class="event-icon-box red"><i class="bi bi-water"></i></div>
+                            <div>
+                                <div class="event-title text-danger">Kurigram — Brahmaputra</div>
+                                <div class="event-meta">+52cm Danger · Bulletin #47</div>
+                            </div>
+                        </div>
+
+                        <div class="event-feed-item" role="button" onclick="focusDistrict('Sunamganj')">
+                            <div class="event-icon-box orange"><i class="bi bi-water"></i></div>
+                            <div>
+                                <div class="event-title text-warning-emphasis">Sunamganj — Surma River</div>
+                                <div class="event-meta">Surging (+12cm in 4 hours)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 3: VERIFIED SHELTER DIRECTORY -->
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="matrix-col-header">
+                            <span><i class="bi bi-house-door-fill me-1"></i> Shelters Directory</span>
+                            <span class="badge bg-secondary font-body fw-normal">8 listed</span>
+                        </div>
+
+                        <div class="event-feed-item">
+                            <div class="event-icon-box green"><i class="bi bi-building-check"></i></div>
+                            <div class="w-100">
+                                <div class="event-title">Sirajganj Govt. College</div>
+                                <div class="event-meta">Capacity: 1,400 · Sadar Upazila</div>
+                                <a href="tel:01711223344" class="btn-brand-action mt-1"><i class="bi bi-telephone-fill"></i> Call 01711-223344</a>
+                            </div>
+                        </div>
+
+                        <div class="event-feed-item">
+                            <div class="event-icon-box green"><i class="bi bi-building-check"></i></div>
+                            <div class="w-100">
+                                <div class="event-title">Kurigram High School</div>
+                                <div class="event-meta">Capacity: 650 · Station Road</div>
+                                <a href="tel:058162011" class="btn-brand-action mt-1"><i class="bi bi-telephone-fill"></i> Call 0581-62011</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 4: LIFE-SAFETY SURVIVAL GUIDANCE -->
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="matrix-col-header">
+                            <span><i class="bi bi-shield-check me-1"></i> Safety Protocols</span>
+                            <span class="badge bg-secondary font-body fw-normal">Do's &amp; Don'ts</span>
+                        </div>
+
+                        <div class="card-inner-box small mb-2">
+                            <div class="fw-bold text-primary mb-1"><i class="bi bi-water"></i> Flood Action:</div>
+                            <ul class="mb-1 ps-3" style="font-size: 0.85rem;">
+                                <li>Move drinking water &amp; food to higher ground.</li>
+                                <li>Disconnect electrical main switches.</li>
+                                <li class="text-danger fw-semibold">Never wade into moving floodwater.</li>
+                            </ul>
+                        </div>
+
+                        <div class="card-inner-box small">
+                            <div class="fw-bold text-warning-emphasis mb-1"><i class="bi bi-activity"></i> Earthquake Protocol:</div>
+                            <ul class="mb-0 ps-3" style="font-size: 0.85rem;">
+                                <li><strong>Drop, Cover &amp; Hold On</strong> under solid desks.</li>
+                                <li>Move to open ground after tremors halt.</li>
+                                <li class="text-danger fw-semibold">Never use lifts during tremors.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- DISTRICT DETAIL INTEL CARD -->
+            <div class="disaster-panel" id="districtDetailCard">
+                <div class="disaster-panel-header">
+                    <div>
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                        <span id="detailDistrictTitle">Sirajganj District — Hazard Intelligence Profile</span>
+                    </div>
+                    <span class="badge bg-danger font-heading fw-bold" id="detailBadge">RED ALERT</span>
+                </div>
+
+                <div class="row g-3 align-items-center">
+                    <div class="col-12 col-md-8">
+                        <p class="mb-2" id="detailMessage">
+                            Water level at Jamuna River Sirajganj point is currently <strong>13.83m (+48cm over danger mark)</strong>. Embankment seepage reported at Kazipur and Belkuchi. Residents of char areas are advised to relocate cattle and essentials to the nearest multi-purpose disaster shelter.
+                        </p>
+                        <div class="small text-muted">
+                            Official Authority: Bangladesh Meteorological Department &amp; FFWC · Bulletin #48
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4 text-md-end">
+                        <div class="card-inner-box">
+                            <div class="small text-muted mb-1 font-heading fw-semibold">Emergency Operations Call:</div>
+                            <a href="tel:999" class="btn btn-danger btn-sm fw-bold w-100 mb-1 font-heading">
+                                <i class="bi bi-telephone-fill"></i> 999 National Emergency
+                            </a>
+                            <a href="tel:1090" class="btn btn-warning btn-sm fw-bold w-100 font-heading text-dark">
+                                <i class="bi bi-shield-fill"></i> 1090 Flood Helpline
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- =========================================================================
+             PAGE 2: RIVER FLOODS (DETAILED FFWC INUNDATION PAGE)
+        ========================================================================= -->
+        <div id="floodPage" class="app-page-view d-none">
+            <div class="disaster-panel">
+                <div class="disaster-panel-header">
+                    <span><i class="bi bi-water text-primary me-2"></i>District River Flood Bulletins &amp; Basin Gauges</span>
+                    <span class="badge bg-danger">4 River Basins on Watch</span>
+                </div>
+
+                <p class="small text-muted mb-3">Official river stage forecasts and flood inundation bulletins sourced directly from the Flood Forecasting &amp; Warning Centre (FFWC).</p>
+
+                <!-- Flood Card 1 -->
+                <div class="card-inner-box mb-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="badge bg-danger font-heading fw-bold mb-1">🔴 Red Alert — Flood Inundation</span>
+                            <h4 class="fs-5 fw-bold mb-1">Jamuna River Basin — Sirajganj District</h4>
+                            <div class="small text-muted">FFWC Bulletin #48 · Issued 26 Aug 2026, 09:30 BST</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="fs-5 fw-bold text-danger font-mono">13.83m</span>
+                            <div class="small text-danger fw-bold">+48cm Over Danger</div>
+                        </div>
+                    </div>
+                    <div class="water-gauge-bar">
+                        <div class="gauge-fill red" style="width: 88%;"></div>
+                    </div>
+                    <p class="small mt-2 mb-2 text-secondary">
+                        Kazipur, Belkuchi, and Sirajganj Sadar upazilas experiencing heavy waterlogging. Low-lying char areas inundated. Residents advised to move livestock to elevated disaster shelters.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-brand-action" onclick="switchPage('shelterPage')"><i class="bi bi-house"></i> View Sirajganj Shelters</button>
+                        <a href="tel:1090" class="btn btn-sm btn-outline-danger fw-semibold font-heading"><i class="bi bi-shield-fill"></i> Call 1090 Helpline</a>
+                    </div>
+                </div>
+
+                <!-- Flood Card 2 -->
+                <div class="card-inner-box mb-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="badge bg-danger font-heading fw-bold mb-1">🔴 Red Alert — River Overflow</span>
+                            <h4 class="fs-5 fw-bold mb-1">Brahmaputra River Basin — Kurigram District</h4>
+                            <div class="small text-muted">FFWC Bulletin #47 · Issued 26 Aug 2026, 06:45 BST</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="fs-5 fw-bold text-danger font-mono">22.42m</span>
+                            <div class="small text-danger fw-bold">+52cm Over Danger</div>
+                        </div>
+                    </div>
+                    <div class="water-gauge-bar">
+                        <div class="gauge-fill red" style="width: 92%;"></div>
+                    </div>
+                    <p class="small mt-2 mb-2 text-secondary">
+                        Chilmari and Nageshwari lowlands flooded across 15 unions. Safe drinking water tube-wells submerged. 3 flood shelters opened.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================================================
+             PAGE 3: LIVE EARTHQUAKES (USGS PUBLIC FEED)
+        ========================================================================= -->
+        <div id="quakePage" class="app-page-view d-none">
+            <div class="disaster-panel">
+                <div class="disaster-panel-header">
+                    <span><i class="bi bi-activity text-warning me-2"></i>Live Seismic Feeds (USGS Earthquake Hazards Program)</span>
+                    <span class="badge bg-secondary">Auto-Refreshed</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle small">
+                        <thead class="table-dark font-heading">
+                            <tr>
+                                <th>Magnitude</th>
+                                <th>Risk Level</th>
+                                <th>Epicenter Location</th>
+                                <th>Depth</th>
+                                <th>Time (BST)</th>
+                                <th>Report</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong class="text-danger fs-6 font-mono">M 5.4</strong></td>
+                                <td><span class="badge bg-danger">Severe</span></td>
+                                <td>78 km SSW of Mawlaik, Myanmar (Felt in Chattogram)</td>
+                                <td>45.0 km</td>
+                                <td>26 Aug, 06:18 BST</td>
+                                <td><a href="https://earthquake.usgs.gov" target="_blank" class="btn btn-sm btn-outline-secondary py-0">USGS Link</a></td>
+                            </tr>
+                            <tr>
+                                <td><strong class="text-warning-emphasis fs-6 font-mono">M 4.6</strong></td>
+                                <td><span class="badge bg-warning text-dark">Moderate</span></td>
+                                <td>38 km ESE of Sylhet, Bangladesh</td>
+                                <td>12.4 km</td>
+                                <td>26 Aug, 04:12 BST</td>
+                                <td><a href="https://earthquake.usgs.gov" target="_blank" class="btn btn-sm btn-outline-secondary py-0">USGS Link</a></td>
+                            </tr>
+                            <tr>
+                                <td><strong class="text-success fs-6 font-mono">M 3.8</strong></td>
+                                <td><span class="badge bg-success">Minor</span></td>
+                                <td>112 km NE of Rangpur (Assam Border)</td>
+                                <td>10.0 km</td>
+                                <td>25 Aug, 22:45 BST</td>
+                                <td><a href="https://earthquake.usgs.gov" target="_blank" class="btn btn-sm btn-outline-secondary py-0">USGS Link</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================================================
+             PAGE 4: VERIFIED SHELTER DIRECTORY
+        ========================================================================= -->
+        <div id="shelterPage" class="app-page-view d-none">
+            <div class="disaster-panel">
+                <div class="disaster-panel-header">
+                    <span><i class="bi bi-house-door-fill text-success me-2"></i>Verified Emergency Shelter Directory</span>
+                    <span class="badge bg-success">8 Verified Shelters</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="card-inner-box shadow-sm">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="fw-bold fs-6 mb-0 font-heading">Sirajganj Govt. College Shelter</h5>
+                                <span class="badge bg-success">Cap: 1,400</span>
+                            </div>
+                            <div class="small text-muted mb-2"><i class="bi bi-geo-alt text-danger"></i> College Road, Sadar Upazila, Sirajganj</div>
+                            <div class="small text-success fw-semibold mb-3"><i class="bi bi-check-circle-fill"></i> Generator Power: Yes · Medical Aid: Yes</div>
+                            <a href="tel:01711223344" class="btn btn-brand-action w-100"><i class="bi bi-telephone-fill"></i> Tap to Call (01711-223344)</a>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="card-inner-box shadow-sm">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="fw-bold fs-6 mb-0 font-heading">Kazipur Union Flood Relief Center</h5>
+                                <span class="badge bg-success">Cap: 850</span>
+                            </div>
+                            <div class="small text-muted mb-2"><i class="bi bi-geo-alt text-danger"></i> Kazipur Ghat Road, Sirajganj</div>
+                            <div class="small text-success fw-semibold mb-3"><i class="bi bi-check-circle-fill"></i> Raised Livestock Area: Yes</div>
+                            <a href="tel:01822334455" class="btn btn-brand-action w-100"><i class="bi bi-telephone-fill"></i> Tap to Call (01822-334455)</a>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="card-inner-box shadow-sm">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="fw-bold fs-6 mb-0 font-heading">Kurigram Govt. High School Shelter</h5>
+                                <span class="badge bg-success">Cap: 650</span>
+                            </div>
+                            <div class="small text-muted mb-2"><i class="bi bi-geo-alt text-danger"></i> Station Road, Kurigram Sadar</div>
+                            <div class="small text-success fw-semibold mb-3"><i class="bi bi-check-circle-fill"></i> Safe Drinking Water Tank: Yes</div>
+                            <a href="tel:058162011" class="btn btn-brand-action w-100"><i class="bi bi-telephone-fill"></i> Tap to Call (0581-62011)</a>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="card-inner-box shadow-sm">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="fw-bold fs-6 mb-0 font-heading">Sylhet Govt. Pilot School Ground</h5>
+                                <span class="badge bg-success">Cap: 900</span>
+                            </div>
+                            <div class="small text-muted mb-2"><i class="bi bi-geo-alt text-danger"></i> Chowhatta Point, Sylhet Sadar</div>
+                            <div class="small text-success fw-semibold mb-3"><i class="bi bi-check-circle-fill"></i> Seismic Clear: Yes</div>
+                            <a href="tel:0821720014" class="btn btn-brand-action w-100"><i class="bi bi-telephone-fill"></i> Tap to Call (0821-720014)</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================================================
+             PAGE 5: SAFETY GUIDELINES (DO'S & DON'TS)
+        ========================================================================= -->
+        <div id="guidelinePage" class="app-page-view d-none">
+            <div class="disaster-panel">
+                <div class="disaster-panel-header">
+                    <span><i class="bi bi-shield-check text-success me-2"></i>Plain-Language Emergency Survival Protocols</span>
+                    <span class="badge bg-secondary">Public Safety</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="card-inner-box shadow-sm">
+                            <h5 class="fw-bold text-primary mb-3 font-heading"><i class="bi bi-water"></i> Flood Safety Directives</h5>
+                            <ul class="list-group list-group-flush small">
+                                <li class="list-group-item bg-transparent text-success fw-semibold">✅ DO: Move drinking water, dry food, and torchlight to high ground.</li>
+                                <li class="list-group-item bg-transparent text-success fw-semibold">✅ DO: Switch off electricity at the main breaker before leaving.</li>
+                                <li class="list-group-item bg-transparent text-danger fw-semibold">⛔ DON'T: Never walk or drive through moving floodwater (15cm knocks you down).</li>
+                                <li class="list-group-item bg-transparent text-danger fw-semibold">⛔ DON'T: Do not touch fallen power lines or wet sockets.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="card-inner-box shadow-sm">
+                            <h5 class="fw-bold text-warning-emphasis mb-3 font-heading"><i class="bi bi-activity"></i> Earthquake Safety Directives</h5>
+                            <ul class="list-group list-group-flush small">
+                                <li class="list-group-item bg-transparent text-success fw-semibold">✅ DO: <strong>Drop, Cover &amp; Hold On</strong> under a sturdy table.</li>
+                                <li class="list-group-item bg-transparent text-success fw-semibold">✅ DO: Move to open ground away from power lines after shaking.</li>
+                                <li class="list-group-item bg-transparent text-danger fw-semibold">⛔ DON'T: Never use elevators during or right after tremors.</li>
+                                <li class="list-group-item bg-transparent text-danger fw-semibold">⛔ DON'T: Do not stand near glass windows or heavy shelves.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================================================
+             PAGE 6: ADMIN PORTAL & ANALYTICS PREVIEW
+        ========================================================================= -->
+        <div id="adminPage" class="app-page-view d-none">
+            <div class="disaster-panel">
+                <div class="disaster-panel-header">
+                    <span><i class="bi bi-shield-lock-fill text-danger me-2"></i>Admin / Authority Emergency Console</span>
+                    <span class="badge bg-danger font-heading fw-bold">Role: Admin</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <div class="card-inner-box text-center shadow-sm">
+                            <div class="display-6 fw-bold text-danger font-mono">4</div>
+                            <div class="small fw-semibold text-muted text-uppercase font-heading">Active Flood Alerts</div>
+                            <button class="btn btn-sm btn-danger mt-2 fw-semibold font-heading" onclick="alert('Admin Action: Issue New Flood Alert')"><i class="bi bi-plus-circle"></i> Issue New Alert</button>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card-inner-box text-center shadow-sm">
+                            <div class="display-6 fw-bold text-success font-mono">8</div>
+                            <div class="small fw-semibold text-muted text-uppercase font-heading">Verified Shelters</div>
+                            <button class="btn btn-sm btn-success mt-2 fw-semibold font-heading" onclick="alert('Admin Action: Add New Shelter')"><i class="bi bi-plus-circle"></i> Add Shelter</button>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card-inner-box text-center shadow-sm">
+                            <div class="display-6 fw-bold text-warning font-mono">3</div>
+                            <div class="small fw-semibold text-muted text-uppercase font-heading">USGS 24H Quakes</div>
+                            <button class="btn btn-sm btn-secondary mt-2 fw-semibold text-white font-heading" onclick="alert('Admin Action: Sync USGS Feed')"><i class="bi bi-arrow-repeat"></i> Sync USGS Feed</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOBILE BOTTOM TAB BAR -->
+        <div class="mobile-bottom-bar">
+            <button class="mobile-tab-item active" onclick="switchPage('homePage')"><i class="bi bi-globe-americas"></i> Radar</button>
+            <button class="mobile-tab-item" onclick="switchPage('floodPage')"><i class="bi bi-water"></i> Floods</button>
+            <button class="mobile-tab-item" onclick="switchPage('quakePage')"><i class="bi bi-activity"></i> Quakes</button>
+            <button class="mobile-tab-item" onclick="switchPage('shelterPage')"><i class="bi bi-house-door"></i> Shelters</button>
+            <button class="mobile-tab-item" onclick="switchPage('guidelinePage')"><i class="bi bi-shield-check"></i> Safety</button>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="gdacs-footer">
+        <div class="container-xl px-3">
+            <div class="row g-3">
+                <div class="col-12 col-md-7">
+                    <div class="fw-bold text-white fs-6 mb-1 font-heading">MHARS Bangladesh — Multi-Hazard Early Alert &amp; Community Response System</div>
+                    <div class="small">
+                        Academic Software Development Project for CSE 3200 · Ahsanullah University of Science and Technology (AUST).<br>
+                        Data Partners: Bangladesh Meteorological Department (BMD), Flood Forecasting and Warning Centre (FFWC), USGS Earthquake Hazards Program.
+                    </div>
+                </div>
+                <div class="col-12 col-md-5 text-md-end">
+                    <div class="fw-bold text-white mb-1 font-heading">Emergency Hotlines</div>
+                    <div class="small font-heading">
+                        <span>National Police / Ambulance: <strong>999</strong></span> | 
+                        <span>Disaster Early Warning: <strong>1090</strong></span> | 
+                        <span>Citizen Line: <strong>333</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Leaflet.js -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- SCRIPT FOR GDACS MAP, MULTI-PAGE & THEME TOGGLE -->
+    <script>
+        // Theme Engine: Light & Dark Mode
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            
+            // Update UI indicators
+            const themeLabel = document.getElementById('themeLabel');
+            const themePillIcon = document.getElementById('themePillIcon');
+            const themeNavIcon = document.getElementById('themeNavIcon');
+            
+            if (newTheme === 'dark') {
+                if (themeLabel) themeLabel.textContent = 'Light Mode';
+                if (themePillIcon) themePillIcon.textContent = '☀️';
+                if (themeNavIcon) themeNavIcon.className = 'bi bi-sun-fill text-warning';
+            } else {
+                if (themeLabel) themeLabel.textContent = 'Dark Mode';
+                if (themePillIcon) themePillIcon.textContent = '🌙';
+                if (themeNavIcon) themeNavIcon.className = 'bi bi-moon-stars-fill';
+            }
+
+            // Switch CartoDB Map Tiles
+            if (window.disasterMapLayer && window.map) {
+                window.map.removeLayer(window.disasterMapLayer);
+            }
+            const tileUrl = newTheme === 'dark'
+                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+            window.disasterMapLayer = L.tileLayer(tileUrl, { maxZoom: 18, attribution: '© OpenStreetMap © CARTO | GDACS Bangladesh' }).addTo(window.map);
+        }
+
+        // Switch between Demo Pages
+        function switchPage(pageId) {
+            document.querySelectorAll('.app-page-view').forEach(el => el.classList.add('d-none'));
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) targetPage.classList.remove('d-none');
+
+            // Update top nav
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(pageId)) btn.classList.add('active');
+            });
+
+            // Update mobile bottom tab
+            document.querySelectorAll('.mobile-tab-item').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(pageId)) btn.classList.add('active');
+            });
+
+            // Invalidate map size when switching back to home
+            if (pageId === 'homePage' && window.map) {
+                setTimeout(() => { window.map.invalidateSize(); }, 200);
+            }
+        }
+
+        // Toggle Device Viewport (Mobile Simulation Mode)
+        function toggleDeviceMode() {
+            const wrapper = document.getElementById('viewWrapper');
+            const btnText = document.getElementById('deviceBtnText');
+            if (wrapper.classList.contains('mobile-mode')) {
+                wrapper.classList.remove('mobile-mode');
+                btnText.textContent = 'Mobile App Simulator';
+            } else {
+                wrapper.classList.add('mobile-mode');
+                btnText.textContent = 'Desktop View';
+            }
+            if (window.map) {
+                setTimeout(() => { window.map.invalidateSize(); }, 300);
+            }
+        }
+
+        // Live Clock (BST UTC+6)
+        function updateClock() {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const bstDate = new Date(utc + (3600000 * 6));
+            const hours = String(bstDate.getHours()).padStart(2, '0');
+            const minutes = String(bstDate.getMinutes()).padStart(2, '0');
+            const seconds = String(bstDate.getSeconds()).padStart(2, '0');
+            document.getElementById('liveClock').textContent = `${hours}:${minutes}:${seconds} BST (UTC+6)`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // LEAFLET GIS MAP INITIALIZATION
+        const map = L.map('disasterMap', { zoomControl: true }).setView([23.6850, 90.3563], 7);
+        window.map = map;
+        window.disasterMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 18,
+            attribution: '© OpenStreetMap © CARTO | GDACS Bangladesh'
+        }).addTo(map);
+
+        function createHazardIcon(color, iconClass) {
+            return L.divIcon({
+                className: 'custom-map-pin',
+                html: `<div style="background-color: ${color}; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.4); border: 2px solid white;">
+                        <i class="bi ${iconClass}"></i>
+                       </div>`,
+                iconSize: [28, 28],
+                iconAnchor: [14, 14],
+                popupAnchor: [0, -14]
+            });
+        }
+
+        const redFloodIcon = createHazardIcon('#D9383A', 'bi-water');
+        const orangeFloodIcon = createHazardIcon('#E67E22', 'bi-water');
+        const orangeQuakeIcon = createHazardIcon('#E67E22', 'bi-activity');
+        const greenShelterIcon = createHazardIcon('#27AE60', 'bi-house-door-fill');
+
+        const hazardLocations = [
+            {
+                name: 'Sirajganj',
+                lat: 24.4534,
+                lng: 89.7008,
+                icon: redFloodIcon,
+                title: 'Sirajganj — Jamuna River Inundation',
+                severity: 'RED ALERT (+48cm Above Danger)',
+                desc: 'Kazipur & Sadar embankment overflow. 13.83m water level.',
+                shelters: ['Sirajganj Govt. College (Cap: 1,400)', 'Kazipur Union Parishad Center (Cap: 850)']
+            },
+            {
+                name: 'Kurigram',
+                lat: 25.8073,
+                lng: 89.6367,
+                icon: redFloodIcon,
+                title: 'Kurigram — Brahmaputra Overflow',
+                severity: 'RED ALERT (+52cm Above Danger)',
+                desc: 'Chilmari point inundated across 15 union parishads.',
+                shelters: ['Kurigram Govt. High School (Cap: 650)']
+            },
+            {
+                name: 'Sylhet',
+                lat: 24.8949,
+                lng: 91.8687,
+                icon: orangeQuakeIcon,
+                title: 'Sylhet — M 4.6 Seismic Tremor',
+                severity: 'ORANGE ALERT (Indo-Burma Fault)',
+                desc: 'Epicenter 38km ESE of Sylhet at 12.4km depth.',
+                shelters: ['Sylhet Govt. Pilot School (Cap: 900)']
+            },
+            {
+                name: 'Sunamganj',
+                lat: 25.0658,
+                lng: 91.4073,
+                icon: orangeFloodIcon,
+                title: 'Sunamganj — Surma River Surge',
+                severity: 'ORANGE ALERT (+12cm in 4 hours)',
+                desc: 'Meghalaya runoff accelerating river rise in haor basin.',
+                shelters: ['Sunamganj Sadar Center (Cap: 700)']
+            },
+            {
+                name: 'Dhaka',
+                lat: 23.8103,
+                lng: 90.4125,
+                icon: greenShelterIcon,
+                title: 'Dhaka Metropolitan Zone',
+                severity: 'GREEN ALERT (Normal Baseline)',
+                desc: 'Buriganga & Turag within normal seasonal limits.',
+                shelters: ['Dhaka College Relief Compound (Cap: 1,200)']
+            }
+        ];
+
+        const markers = {};
+        hazardLocations.forEach(loc => {
+            const marker = L.marker([loc.lat, loc.lng], { icon: loc.icon }).addTo(map);
+            marker.bindPopup(`
+                <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; min-width: 180px;">
+                    <strong style="color: #586369; font-size: 13px;">${loc.title}</strong><br>
+                    <span style="color: ${loc.severity.includes('RED') ? '#D9383A' : (loc.severity.includes('ORANGE') ? '#E67E22' : '#27AE60')}; font-weight: 700;">
+                        ● ${loc.severity}
+                    </span><br>
+                    <p style="margin: 4px 0 6px 0; color: #586369; font-family: 'Inter', sans-serif;">${loc.desc}</p>
+                    <small style="color: #859096;"><strong>Shelters:</strong> ${loc.shelters.join(', ')}</small>
+                </div>
+            `);
+            markers[loc.name] = { marker, data: loc };
+        });
+
+        function focusDistrict(districtName) {
+            document.getElementById('districtSelect').value = districtName;
+            onDistrictChange(districtName);
+        }
+
+        function onDistrictChange(districtName) {
+            if (districtName === 'All') {
+                resetMap();
+                return;
+            }
+
+            const item = markers[districtName];
+            if (item) {
+                map.flyTo([item.data.lat, item.data.lng], 9, { duration: 1.2 });
+                item.marker.openPopup();
+
+                document.getElementById('detailDistrictTitle').textContent = `${districtName} District — Hazard Intelligence Profile`;
+                document.getElementById('detailBadge').textContent = item.data.severity.includes('RED') ? 'RED ALERT' : (item.data.severity.includes('ORANGE') ? 'ORANGE ALERT' : 'GREEN ALL CLEAR');
+                document.getElementById('detailBadge').className = `badge font-heading fw-bold ${item.data.severity.includes('RED') ? 'bg-danger' : (item.data.severity.includes('ORANGE') ? 'bg-warning text-dark' : 'bg-success')}`;
+                document.getElementById('detailMessage').innerHTML = `<strong>${item.data.title}:</strong> ${item.data.desc} Verified shelters in this sector: <em>${item.data.shelters.join(', ')}</em>.`;
+            }
+        }
+
+        function resetMap() {
+            document.getElementById('districtSelect').value = 'All';
+            map.flyTo([23.6850, 90.3563], 7, { duration: 1 });
+            document.getElementById('detailDistrictTitle').textContent = 'National Overview — Bangladesh Multi-Hazard Network';
+            document.getElementById('detailBadge').textContent = 'MONITORING ACTIVE';
+            document.getElementById('detailBadge').className = 'badge bg-secondary font-heading fw-bold';
+            document.getElementById('detailMessage').textContent = 'Consolidated real-time disaster alerts across all 64 districts. Click any marker on the map or select a district to view detailed hazard levels and verified emergency shelters.';
+        }
+    </script>
+</body>
+</html>
