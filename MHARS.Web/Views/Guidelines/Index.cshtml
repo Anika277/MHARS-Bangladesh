@@ -2,35 +2,40 @@
 @{
     ViewData["Title"] = "Safety Guidelines";
 }
-<h2>Safety Guidelines — Plain Language Do's &amp; Don'ts</h2>
+<div class="page-title"><i class="bi bi-shield-check me-1"></i> Safety Guidelines</div>
+<p class="page-subtitle">Plain-language do's and don'ts for floods and earthquakes.</p>
 
-@foreach (var hazard in new[] { MHARS.Web.Models.HazardType.Flood, MHARS.Web.Models.HazardType.Earthquake })
-{
-    var items = Model.Where(g => g.HazardType == hazard).ToList();
-    if (!items.Any()) { continue; }
-    <div class="card mt-4">
-        <div class="card-header bg-primary text-white fw-bold">
-            @(hazard == MHARS.Web.Models.HazardType.Flood ? "🌊 Flood Safety" : "🌍 Earthquake Safety")
-        </div>
-        <div class="card-body row">
-            <div class="col-md-6">
-                <h5 class="text-success">✅ Do's</h5>
-                <ul class="list-group list-group-flush">
-                    @foreach (var g in items.Where(i => i.IsDo))
-                    {
-                        <li class="list-group-item">@g.Text</li>
-                    }
-                </ul>
+<div class="row g-3">
+    @foreach (var hazard in new[] { MHARS.Web.Models.HazardType.Flood, MHARS.Web.Models.HazardType.Earthquake })
+    {
+        var items = Model.Where(g => g.HazardType == hazard).ToList();
+        if (!items.Any()) { continue; }
+        <div class="col-12 col-lg-6">
+            <div class="disaster-panel mb-0 h-100">
+                <div class="guideline-header mb-3">
+                    @(hazard == MHARS.Web.Models.HazardType.Flood ? "🌊 Flood Safety" : "🌍 Earthquake Safety")
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h5 class="text-success font-heading">✅ Do's</h5>
+                        <ul class="list-group list-group-flush">
+                            @foreach (var g in items.Where(i => i.IsDo))
+                            {
+                                <li class="list-group-item">@g.Text</li>
+                            }
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-danger font-heading">⛔ Don'ts</h5>
+                        <ul class="list-group list-group-flush">
+                            @foreach (var g in items.Where(i => !i.IsDo))
+                            {
+                                <li class="list-group-item">@g.Text</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-6">
-                <h5 class="text-danger">⛔ Don'ts</h5>
-                <ul class="list-group list-group-flush">
-                    @foreach (var g in items.Where(i => !i.IsDo))
-                    {
-                        <li class="list-group-item">@g.Text</li>
-                    }
-                </ul>
-            </div>
         </div>
-    </div>
-}
+    }
+</div>
