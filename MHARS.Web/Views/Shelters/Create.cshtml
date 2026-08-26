@@ -2,8 +2,11 @@
 @{
     ViewData["Title"] = "Add Shelter";
 }
-<h2>Add Shelter</h2>
+<div class="page-title"><i class="bi bi-plus-circle me-1"></i> Add Shelter</div>
+<p class="page-subtitle">Add a verified emergency shelter to the public directory.</p>
+
 <div class="row"><div class="col-md-6">
+<div class="disaster-panel">
 <form asp-action="Create">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <div class="mb-3">
@@ -30,9 +33,10 @@
         <input asp-for="ContactNumber" class="form-control" />
         <span asp-validation-for="ContactNumber" class="text-danger"></span>
     </div>
-    <button type="submit" class="btn btn-primary">Save</button>
+    <button type="submit" class="btn btn-brand-action"><i class="bi bi-check2 me-1"></i> Save</button>
     <a class="btn btn-secondary" asp-action="Index">Cancel</a>
 </form>
+</div>
 </div></div>
 
 @section Scripts {

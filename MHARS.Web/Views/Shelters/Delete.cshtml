@@ -2,15 +2,17 @@
 @{
     ViewData["Title"] = "Delete Shelter";
 }
-<h2>Delete Shelter</h2>
-<h5>Are you sure you want to delete "@Model.Name"?</h5>
-<dl class="row">
-    <dt class="col-sm-3">District</dt><dd class="col-sm-9">@Model.District</dd>
-    <dt class="col-sm-3">Address</dt><dd class="col-sm-9">@Model.Address</dd>
-    <dt class="col-sm-3">Capacity</dt><dd class="col-sm-9">@Model.Capacity</dd>
-</dl>
+<div class="page-title"><i class="bi bi-trash3 me-1"></i> Delete Shelter</div>
+<div class="disaster-panel">
+    <h5 class="font-heading">Are you sure you want to delete "@Model.Name"?</h5>
+    <dl class="row mb-0">
+        <dt class="col-sm-3">District</dt><dd class="col-sm-9">@Model.District</dd>
+        <dt class="col-sm-3">Address</dt><dd class="col-sm-9">@Model.Address</dd>
+        <dt class="col-sm-3">Capacity</dt><dd class="col-sm-9">@Model.Capacity</dd>
+    </dl>
+</div>
 <form asp-action="Delete">
     <input type="hidden" asp-for="Id" />
-    <button type="submit" class="btn btn-danger">Delete</button>
+    <button type="submit" class="btn btn-danger"><i class="bi bi-trash3 me-1"></i> Delete</button>
     <a class="btn btn-secondary" asp-action="Index">Cancel</a>
 </form>
