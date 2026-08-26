@@ -2,20 +2,39 @@
 @{
     ViewData["Title"] = "Admin Dashboard";
 }
-<h2>Analytics Dashboard</h2>
+<div class="page-title"><i class="bi bi-speedometer2 me-1"></i> Analytics Dashboard</div>
+<p class="page-subtitle">Overview of alerts and shelters managed by the authority.</p>
 
-<div class="row mb-4">
-    <div class="col-md-3"><div class="card text-bg-primary"><div class="card-body"><h5>Total Alerts</h5><h2>@ViewBag.TotalAlerts</h2></div></div></div>
-    <div class="col-md-3"><div class="card text-bg-info"><div class="card-body"><h5>Flood Alerts</h5><h2>@ViewBag.FloodCount</h2></div></div></div>
-    <div class="col-md-3"><div class="card text-bg-warning"><div class="card-body"><h5>Earthquake Alerts</h5><h2>@ViewBag.QuakeCount</h2></div></div></div>
-    <div class="col-md-3"><div class="card text-bg-success"><div class="card-body"><h5>Shelters</h5><h2>@ViewBag.ShelterCount</h2></div></div></div>
+<div class="row mb-4 g-3">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">@ViewBag.TotalAlerts</div>
+            <div class="stat-label">Total Alerts</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card stat-orange">
+            <div class="stat-value">@ViewBag.FloodCount</div>
+            <div class="stat-label">Flood Alerts</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card stat-red">
+            <div class="stat-value">@ViewBag.QuakeCount</div>
+            <div class="stat-label">Earthquake Alerts</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card stat-green">
+            <div class="stat-value">@ViewBag.ShelterCount</div>
+            <div class="stat-label">Shelters</div>
+        </div>
+    </div>
 </div>
 
-<div class="card">
-    <div class="card-header fw-bold">Alerts Issued per District</div>
-    <div class="card-body">
-        <canvas id="districtChart" height="100"></canvas>
-    </div>
+<div class="disaster-panel">
+    <div class="panel-header"><span><i class="bi bi-bar-chart me-1"></i> Alerts Issued per District</span></div>
+    <canvas id="districtChart" height="100"></canvas>
 </div>
 
 @section Scripts {
@@ -28,7 +47,9 @@
                 datasets: [{
                     label: 'Alerts issued',
                     data: @Html.Raw(ViewBag.ChartData),
-                    backgroundColor: 'rgba(13, 110, 253, 0.7)'
+                    backgroundColor: 'rgba(133, 144, 150, 0.8)',
+                    borderColor: 'rgba(88, 99, 105, 1)',
+                    borderWidth: 1
                 }]
             },
             options: {
