@@ -42,6 +42,6 @@ public class HomeController(ApplicationDbContext db, IUsgsEarthquakeService usgs
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View();
+        return View(new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
     }
 }

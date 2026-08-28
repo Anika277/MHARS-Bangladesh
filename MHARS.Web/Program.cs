@@ -24,7 +24,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddHttpClient<IUsgsEarthquakeService, UsgsEarthquakeService>();
+builder.Services.AddHttpClient<IUsgsEarthquakeService, UsgsEarthquakeService>(client =>
+    client.Timeout = TimeSpan.FromSeconds(12));
 
 var app = builder.Build();
 

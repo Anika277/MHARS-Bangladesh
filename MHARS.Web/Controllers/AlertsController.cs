@@ -20,6 +20,7 @@ public class AlertsController(ApplicationDbContext db) : Controller
             query = query.Where(a => a.HazardType == hazard.Value);
 
         ViewBag.Districts = Districts.List;
+        ViewBag.SelectedDistrict = district ?? "All";
         return View(await query.ToListAsync());
     }
 
@@ -35,6 +36,9 @@ public class AlertsController(ApplicationDbContext db) : Controller
     public IActionResult Create()
     {
         PopulateDropdowns();
+        ViewBag.HazardList = new SelectList(
+            new[] { new { Value = HazardType.Flood, Text = "Flood" } },
+            "Value", "Text");
         return View();
     }
 
@@ -46,6 +50,9 @@ public class AlertsController(ApplicationDbContext db) : Controller
         if (!ModelState.IsValid)
         {
             PopulateDropdowns();
+            ViewBag.HazardList = new SelectList(
+                new[] { new { Value = HazardType.Flood, Text = "Flood" } },
+                "Value", "Text");
             return View(alert);
         }
         alert.IssuedAt = DateTime.UtcNow;

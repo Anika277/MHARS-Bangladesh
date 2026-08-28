@@ -63,7 +63,7 @@ public class UsgsEarthquakeService(HttpClient httpClient) : IUsgsEarthquakeServi
                 .Take(25)
                 .ToList();
         }
-        catch (HttpRequestException)
+        catch (Exception)
         {
             return [];
         }
