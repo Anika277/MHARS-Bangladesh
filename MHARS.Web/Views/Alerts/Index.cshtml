@@ -31,7 +31,10 @@
             </select>
         </div>
         <div class="col-auto">
-            <a class="btn btn-brand-action" asp-action="Create"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</a>
+            @if (User.IsInRole("Admin"))
+            {
+                <a class="btn btn-brand-action" asp-action="Create"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</a>
+            }
         </div>
     </form>
 </div>
@@ -41,7 +44,7 @@
         <table class="table table-hover align-middle">
             <thead>
                 <tr>
-                    <th>Hazard</th><th>District</th><th>Title</th><th>Severity</th><th>Issued (UTC)</th><th>By</th><th></th>
+                    <th>Hazard</th><th>District</th><th>Title</th><th>Severity</th><th>Issued (UTC)</th><th>By</th>@if (User.IsInRole("Admin")) { <th></th> }
                 </tr>
             </thead>
             <tbody data-reveal-group>
@@ -60,10 +63,13 @@
                         <td><span class="badge text-bg-@badge font-heading">@a.Severity</span></td>
                         <td>@a.IssuedAt.ToString("dd MMM yyyy hh:mm")</td>
                         <td>@a.IssuedBy</td>
-                        <td class="text-nowrap">
-                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@a.Id">Edit</a>
-                            <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@a.Id">Delete</a>
-                        </td>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <td class="text-nowrap">
+                                <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@a.Id">Edit</a>
+                                <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@a.Id">Delete</a>
+                            </td>
+                        }
                     </tr>
                 }
             </tbody>
