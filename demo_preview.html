@@ -807,17 +807,18 @@
                 </div>
 
                 <!-- GDACS Map Legend -->
-                <div class="p-2 px-3 border-top d-flex flex-wrap justify-content-between align-items-center gap-2 small" style="background: var(--theme-surface-subtle); border-radius: 0 0 9px 9px;">
+                <div class="p-2 px-3 border-top d-flex flex-wrap justify-content-between align-items-center gap-2 small"
+                     style="background: #1A2E24; border-radius: 0 0 9px 9px;">
                     <div class="d-flex align-items-center gap-3 font-heading fw-semibold">
-                        <span class="text-muted">Alert Levels:</span>
-                        <span class="text-danger"><i class="bi bi-circle-fill"></i> Red (Critical)</span>
-                        <span class="text-warning-emphasis"><i class="bi bi-circle-fill"></i> Orange (Moderate)</span>
-                        <span class="text-success"><i class="bi bi-circle-fill"></i> Green (Clear)</span>
+                        <span style="color: rgba(255,255,255,0.55);">Alert Levels:</span>
+                        <span style="color: #FF6B6B;"><i class="bi bi-circle-fill"></i> Red (Critical)</span>
+                        <span style="color: #FFB347;"><i class="bi bi-circle-fill"></i> Orange (Moderate)</span>
+                        <span style="color: #6BCB77;"><i class="bi bi-circle-fill"></i> Green (Clear)</span>
                     </div>
-                    <div class="d-none d-md-flex align-items-center gap-3 text-muted">
-                        <span><i class="bi bi-water text-primary"></i> Floods: FFWC</span>
-                        <span><i class="bi bi-activity text-warning"></i> Earthquakes: USGS</span>
-                        <span><i class="bi bi-house-door-fill text-success"></i> Shelters: Verified</span>
+                    <div class="d-none d-md-flex align-items-center gap-3" style="color: rgba(255,255,255,0.55);">
+                        <span><i class="bi bi-water" style="color:#60B4FF;"></i> Floods: FFWC</span>
+                        <span><i class="bi bi-activity" style="color:#FFB347;"></i> Earthquakes: USGS</span>
+                        <span><i class="bi bi-house-door-fill" style="color:#6BCB77;"></i> Shelters: Verified</span>
                     </div>
                 </div>
             </div>
@@ -1295,10 +1296,11 @@
             if (window.disasterMapLayer && window.map) {
                 window.map.removeLayer(window.disasterMapLayer);
             }
-            const tileUrl = newTheme === 'dark'
-                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-            window.disasterMapLayer = L.tileLayer(tileUrl, { maxZoom: 18, attribution: '© OpenStreetMap © CARTO | GDACS Bangladesh' }).addTo(window.map);
+            const tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+            window.disasterMapLayer = L.tileLayer(tileUrl, {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(window.map);
         }
 
         // Switch between Demo Pages
@@ -1357,9 +1359,9 @@
         // LEAFLET GIS MAP INITIALIZATION
         const map = L.map('disasterMap', { zoomControl: true }).setView([23.6850, 90.3563], 7);
         window.map = map;
-        window.disasterMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            maxZoom: 18,
-            attribution: '© OpenStreetMap © CARTO | GDACS Bangladesh'
+        window.disasterMapLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
         function createHazardIcon(color, iconClass) {

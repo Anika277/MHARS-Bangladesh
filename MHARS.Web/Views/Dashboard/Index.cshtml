@@ -2,37 +2,37 @@
 @{
     ViewData["Title"] = "Admin Dashboard";
 }
-<div class="page-title"><i class="bi bi-speedometer2 me-1"></i> Analytics Dashboard</div>
+<div class="page-title" data-reveal><i class="bi bi-speedometer2 me-1"></i> Analytics Dashboard</div>
 <p class="page-subtitle">Overview of alerts and shelters managed by the authority.</p>
 
-<div class="row mb-4 g-3">
+<div class="row mb-4 g-3" data-reveal-group>
     <div class="col-md-3">
         <div class="stat-card">
-            <div class="stat-value">@ViewBag.TotalAlerts</div>
+            <div class="stat-value" data-countup>@ViewBag.TotalAlerts</div>
             <div class="stat-label">Total Alerts</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card stat-orange">
-            <div class="stat-value">@ViewBag.FloodCount</div>
+            <div class="stat-value" data-countup>@ViewBag.FloodCount</div>
             <div class="stat-label">Flood Alerts</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card stat-red">
-            <div class="stat-value">@ViewBag.QuakeCount</div>
+            <div class="stat-value" data-countup>@ViewBag.QuakeCount</div>
             <div class="stat-label">Earthquake Alerts</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card stat-green">
-            <div class="stat-value">@ViewBag.ShelterCount</div>
+            <div class="stat-value" data-countup>@ViewBag.ShelterCount</div>
             <div class="stat-label">Shelters</div>
         </div>
     </div>
 </div>
 
-<div class="disaster-panel">
+<div class="disaster-panel" data-reveal>
     <div class="panel-header"><span><i class="bi bi-bar-chart me-1"></i> Alerts Issued per District</span></div>
     <canvas id="districtChart" height="100"></canvas>
 </div>
@@ -53,6 +53,7 @@
                 }]
             },
             options: {
+                animation: { duration: 1200, easing: 'easeOutExpo' },
                 scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
             }
         });

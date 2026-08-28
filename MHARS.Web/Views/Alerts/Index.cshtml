@@ -2,10 +2,10 @@
 @{
     ViewData["Title"] = "All Alerts";
 }
-<div class="page-title">All Hazard Alerts</div>
+<div class="page-title" data-reveal>All Hazard Alerts</div>
 <p class="page-subtitle">District-wise flood and earthquake alerts issued by the authority.</p>
 
-<div class="disaster-panel">
+<div class="disaster-panel" data-reveal>
     <form method="get" class="row g-2 align-items-end">
         <div class="col-auto">
             <label class="form-label">District</label>
@@ -44,7 +44,7 @@
                     <th>Hazard</th><th>District</th><th>Title</th><th>Severity</th><th>Issued (UTC)</th><th>By</th><th></th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody data-reveal-group>
                 @foreach (var a in Model)
                 {
                     var badge = a.Severity switch

@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Safety Guidelines";
 }
-<div class="page-title"><i class="bi bi-shield-check me-1"></i> Safety Guidelines</div>
+<div class="page-title" data-reveal><i class="bi bi-shield-check me-1"></i> Safety Guidelines</div>
 <p class="page-subtitle">Plain-language do's and don'ts for floods and earthquakes.</p>
 
 <div class="row g-3">
@@ -10,7 +10,7 @@
     {
         var items = Model.Where(g => g.HazardType == hazard).ToList();
         if (!items.Any()) { continue; }
-        <div class="col-12 col-lg-6">
+        <div class="col-12 col-lg-6" data-reveal>
             <div class="disaster-panel mb-0 h-100">
                 <div class="guideline-header mb-3">
                     @(hazard == MHARS.Web.Models.HazardType.Flood ? "🌊 Flood Safety" : "🌍 Earthquake Safety")
@@ -18,7 +18,7 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <h5 class="text-success font-heading">✅ Do's</h5>
-                        <ul class="list-group list-group-flush">
+                        <ul class="list-group list-group-flush" data-reveal-group>
                             @foreach (var g in items.Where(i => i.IsDo))
                             {
                                 <li class="list-group-item">@g.Text</li>
@@ -27,7 +27,7 @@
                     </div>
                     <div class="col-md-6">
                         <h5 class="text-danger font-heading">⛔ Don'ts</h5>
-                        <ul class="list-group list-group-flush">
+                        <ul class="list-group list-group-flush" data-reveal-group>
                             @foreach (var g in items.Where(i => !i.IsDo))
                             {
                                 <li class="list-group-item">@g.Text</li>

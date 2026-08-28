@@ -59,3 +59,83 @@ function updateClock() {
 }
 setInterval(updateClock, 1000);
 updateClock();
+
+// ── MOTION LAYER: scroll reveals, count-ups, sticky nav reaction ──
+// Animates real server-rendered markup via [data-reveal] / [data-reveal-group] /
+// [data-countup]. Everything stays visible if GSAP is unavailable or the user
+// prefers reduced motion.
+
+function initMharsMotion() {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!window.gsap || !window.ScrollTrigger) {
+        return;
+    }
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    if (prefersReduced) {
+        gsap.globalTimeline.timeScale(1000);
+    }
+
+    gsap.from('main', { opacity: 0, y: 10, duration: 0.55, ease: 'power2.out' });
+
+    gsap.utils.toArray('[data-reveal]').forEach((el) => {
+        const delay = parseFloat(el.getAttribute('data-reveal-delay') || '0') || 0;
+        gsap.fromTo(el,
+            { opacity: 0, y: 26 },
+            {
+                opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', delay,
+                scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+            });
+    });
+
+    gsap.utils.toArray('[data-reveal-group]').forEach((group) => {
+        const items = Array.prototype.slice.call(group.children);
+        items.forEach((el, i) => {
+            gsap.fromTo(el,
+                { opacity: 0, y: 18 },
+                {
+                    opacity: 1, y: 0, duration: 0.6, ease: 'power3.out', delay: (i % 6) * 0.07,
+                    scrollTrigger: { trigger: el, start: 'top 90%', once: true }
+                });
+        });
+    });
+
+    gsap.utils.toArray('[data-countup]').forEach((el) => {
+        const target = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0;
+        const counter = { v: 0 };
+        el.textContent = '0';
+        gsap.to(counter, {
+            v: target, duration: 1.8, ease: 'power2.out',
+            onUpdate() {
+                el.textContent = Math.round(counter.v).toLocaleString('en-US');
+            },
+            scrollTrigger: { trigger: el, start: 'top 90%', once: true }
+        });
+    });
+
+    const nav = document.querySelector('.main-nav');
+    const progress = document.getElementById('scrollProgress');
+    if (nav) {
+        const onNavScroll = () => {
+            const scrolled = (window.scrollY || 0) > 8;
+            nav.classList.toggle('nav-scrolled', scrolled);
+            if (progress) {
+                const doc = document.documentElement;
+                const max = doc.scrollHeight - doc.clientHeight;
+                progress.style.transform = 'scaleX(' + (max > 0 ? doc.scrollTop / max : 0) + ')';
+            }
+        };
+        onNavScroll();
+        window.addEventListener('scroll', onNavScroll, { passive: true });
+    }
+
+    ScrollTrigger.refresh();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMharsMotion);
+} else {
+    initMharsMotion();
+}

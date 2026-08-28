@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Live Earthquakes (USGS)";
 }
-<div class="page-title"><i class="bi bi-activity me-1"></i> Live Earthquake Feed</div>
+<div class="page-title" data-reveal><i class="bi bi-activity me-1"></i> Live Earthquake Feed</div>
 <p class="page-subtitle">
     Real events from the last 24 hours, fetched live from the
     <a href="https://earthquake.usgs.gov/earthquakes/feed/" target="_blank" rel="noopener">USGS Earthquake Hazards Program</a> public API.
@@ -12,7 +12,7 @@
 
 @if (!Model.Any())
 {
-    <div class="alert alert-warning"><i class="bi bi-wifi-off me-1"></i> Could not reach the USGS feed right now. Please try again later.</div>
+    <div class="alert alert-warning" data-reveal><i class="bi bi-wifi-off me-1"></i> Could not reach the USGS feed right now. Please try again later.</div>
 }
 else
 {
@@ -22,7 +22,7 @@ else
                 <thead>
                     <tr><th>Magnitude</th><th>Risk Level</th><th>Location</th><th>Depth</th><th>Time (UTC)</th><th></th></tr>
                 </thead>
-                <tbody>
+                <tbody data-reveal-group>
                     @foreach (var e in Model)
                     {
                         <tr>

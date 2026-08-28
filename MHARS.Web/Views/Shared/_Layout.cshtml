@@ -1,12 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - MHARS</title>
+    <title>@ViewData["Title"] - RapidShonket</title>
+    <meta name="description" content="RapidShonket — Bangladesh multi-hazard alert and response system. Check flood and earthquake alerts for your district." />
+
+    <!-- Google Fonts: Plus Jakarta Sans (wordmark) + Hind Siliguri (brand) + Roboto Condensed (headings/nav) + Inter (body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Hind+Siliguri:wght@400;600;700&family=Roboto+Condensed:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -30,24 +34,35 @@
         </div>
     </div>
 
-    <!-- MAIN HEADER (COLOR #859096) -->
+    <!-- MAIN HEADER -->
     <header class="mhars-header">
         <div class="container-xl px-3">
             <div class="row align-items-center g-3">
+                <!-- Brand -->
                 <div class="col-12 col-md-5">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="fs-1" aria-hidden="true">🌊</div>
-                        <div>
-                            <h1 class="brand-title">M H A R S</h1>
-                            <div class="brand-sub">Multi-Hazard Alert &amp; Response System — Bangladesh</div>
+                    <div>
+                        <h1 class="brand-title">RapidShonket</h1>
+                            <div class="brand-sub">Multi-Hazard Alert &amp; Response — Bangladesh</div>
+                            <div class="brand-tagline">Monitor &middot; Verify &middot; Alert</div>
+                            <!-- Header CTA buttons -->
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                <a href="#districtSelectorStrip" class="btn-header-primary">
+                                    <i class="bi bi-geo-alt-fill"></i> Check My District
+                                </a>
+                                <a asp-controller="Alerts" asp-action="Index" class="btn-header-secondary">
+                                    <i class="bi bi-list-ul"></i> View All Alerts
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <!-- Mission -->
                 <div class="col-12 col-md-4 d-none d-md-block">
                     <div class="mission-text-box">
-                        MHARS is a public disaster warning framework connecting <strong>Flood Forecasting and Warning Centre (FFWC)</strong>, <strong>Bangladesh Meteorological Department (BMD)</strong>, and <strong>USGS Earthquake Hazards Program</strong>.
+                        RapidShonket connects <strong>Flood Forecasting &amp; Warning Centre (FFWC)</strong>, <strong>Bangladesh Meteorological Department (BMD)</strong>, and <strong>USGS Earthquake Hazards Program</strong> into one citizen-facing alert system.
                     </div>
                 </div>
+                <!-- Status badge -->
                 <div class="col-12 col-md-3 text-md-end">
                     <span class="badge bg-danger p-2 font-heading fw-bold shadow-sm"><i class="bi bi-exclamation-triangle-fill"></i> National Hazard Watch Active</span>
                 </div>
@@ -55,8 +70,50 @@
         </div>
     </header>
 
+    <!-- DISTRICT SELECTOR STRIP -->
+    <div class="district-selector-strip" id="districtSelectorStrip">
+        <div class="container-xl px-3">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="strip-label"><i class="bi bi-geo-alt me-1"></i> আপনার জেলা কোনটি?</span>
+                <select id="districtStripSelect" class="form-select form-select-sm" style="max-width:230px;"
+                        onchange="document.getElementById('districtSelect') && (document.getElementById('districtSelect').value = this.value)">
+                    <option value="All">All Bangladesh</option>
+                    <option>Bagerhat</option><option>Bandarban</option><option>Barguna</option>
+                    <option>Barishal</option><option>Bhola</option><option>Bogura</option>
+                    <option>Brahmanbaria</option><option>Chandpur</option><option>Chapai Nawabganj</option>
+                    <option>Chattogram</option><option>Chuadanga</option><option>Cox's Bazar</option>
+                    <option>Cumilla</option><option>Dhaka</option><option>Dinajpur</option>
+                    <option>Faridpur</option><option>Feni</option><option>Gaibandha</option>
+                    <option>Gazipur</option><option>Gopalganj</option><option>Habiganj</option>
+                    <option>Jamalpur</option><option>Jashore</option><option>Jhalokati</option>
+                    <option>Jhenaidah</option><option>Joypurhat</option><option>Khagrachhari</option>
+                    <option>Khulna</option><option>Kishoreganj</option><option>Kurigram</option>
+                    <option>Kushtia</option><option>Lakshmipur</option><option>Lalmonirhat</option>
+                    <option>Madaripur</option><option>Magura</option><option>Manikganj</option>
+                    <option>Meherpur</option><option>Moulvibazar</option><option>Munshiganj</option>
+                    <option>Mymensingh</option><option>Naogaon</option><option>Narail</option>
+                    <option>Narayanganj</option><option>Narsingdi</option><option>Natore</option>
+                    <option>Netrokona</option><option>Nilphamari</option><option>Noakhali</option>
+                    <option>Pabna</option><option>Panchagarh</option><option>Patuakhali</option>
+                    <option>Pirojpur</option><option>Rajbari</option><option>Rajshahi</option>
+                    <option>Rangamati</option><option>Rangpur</option><option>Satkhira</option>
+                    <option>Shariatpur</option><option>Sherpur</option><option>Sirajganj</option>
+                    <option>Sunamganj</option><option>Sylhet</option><option>Tangail</option>
+                    <option>Thakurgaon</option>
+                </select>
+                <button class="btn-check-district" onclick="checkDistrictFromStrip()">
+                    <i class="bi bi-search"></i> Check Now
+                </button>
+                <span class="ms-auto d-none d-md-inline" style="font-size:0.76rem; color:rgba(255,255,255,0.55);">
+                    <i class="bi bi-info-circle me-1"></i>Select your district to see active alerts
+                </span>
+            </div>
+        </div>
+    </div>
+
     <!-- NAVIGATION TABS -->
     <nav class="main-nav navbar navbar-expand-sm navbar-toggleable-sm">
+        <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
         <div class="container-xl px-3">
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
@@ -94,7 +151,7 @@
                 <div class="d-flex align-items-center gap-2 py-1">
                     <partial name="_LoginPartial" />
                     <button class="btn btn-sm btn-light fw-bold py-1 px-3 shadow-sm" onclick="toggleDeviceMode()">
-                        <i class="bi bi-phone me-1"></i> <span id="deviceBtnText">Mobile App Simulator</span>
+                        <i class="bi bi-phone me-1"></i> <span id="deviceBtnText">Mobile Simulator</span>
                     </button>
                 </div>
             </div>
@@ -122,7 +179,7 @@
         <div class="container-xl px-3">
             <div class="row g-2 align-items-center">
                 <div class="col-md-8">
-                    <span class="footer-title">MHARS Bangladesh</span> — Academic project for CSE 3200, AUST.
+                    <span class="footer-title">RapidShonket Bangladesh</span> — Academic project for CSE 3200, AUST.
                 </div>
                 <div class="col-md-4 text-md-end">
                     <span class="font-heading">Emergency Hotlines: <strong>999</strong> | <strong>1090</strong> | <strong>333</strong></span>
@@ -132,9 +189,72 @@
             </div>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // Live clock
+        function updateClock() {
+            const now = new Date();
+            const bst = new Intl.DateTimeFormat('en-BD', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false, timeZone: 'Asia/Dhaka'
+            }).format(now);
+            const el = document.getElementById('liveClock');
+            if (el) el.textContent = bst + ' BST (UTC+6)';
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Theme toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            document.getElementById('themePillIcon').textContent = isDark ? '🌙' : '☀️';
+            document.getElementById('themeLabel').textContent = isDark ? 'Dark Mode' : 'Light Mode';
+            localStorage.setItem('rs-theme', isDark ? 'light' : 'dark');
+        }
+        // Restore saved theme
+        (function () {
+            const saved = localStorage.getItem('rs-theme');
+            if (saved === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                const icon = document.getElementById('themePillIcon');
+                const label = document.getElementById('themeLabel');
+                if (icon) icon.textContent = '☀️';
+                if (label) label.textContent = 'Light Mode';
+            }
+        })();
+
+        // Mobile device simulator
+        let isMobile = false;
+        function toggleDeviceMode() {
+            isMobile = !isMobile;
+            document.getElementById('viewWrapper').classList.toggle('mobile-mode', isMobile);
+            document.getElementById('deviceBtnText').textContent = isMobile ? 'Exit Simulator' : 'Mobile Simulator';
+        }
+
+        // District strip — syncs with the map dropdown if present on this page
+        function checkDistrictFromStrip() {
+            const stripVal = document.getElementById('districtStripSelect').value;
+            const mapSelect = document.getElementById('districtSelect');
+            if (mapSelect) {
+                const match = [...mapSelect.options].find(o => o.value === stripVal);
+                if (match) mapSelect.value = stripVal;
+                if (typeof onDistrictChange === 'function') onDistrictChange(stripVal);
+                mapSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // On non-home pages, redirect to home with hash
+                window.location.href = '/?district=' + encodeURIComponent(stripVal);
+            }
+        }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

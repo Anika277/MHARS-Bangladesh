@@ -2,11 +2,11 @@
 @{
     ViewData["Title"] = "Add Shelter";
 }
-<div class="page-title"><i class="bi bi-plus-circle me-1"></i> Add Shelter</div>
+<div class="page-title" data-reveal><i class="bi bi-plus-circle me-1"></i> Add Shelter</div>
 <p class="page-subtitle">Add a verified emergency shelter to the public directory.</p>
 
 <div class="row"><div class="col-md-6">
-<div class="disaster-panel">
+<div class="disaster-panel" data-reveal data-reveal-delay="0.08">
 <form asp-action="Create">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <div class="mb-3">
