@@ -2,12 +2,12 @@
 @{
     ViewData["Title"] = "Issue Alert";
 }
-<div class="page-title"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</div>
+<div class="page-title" data-reveal><i class="bi bi-plus-circle me-1"></i> Issue New Alert</div>
 <p class="page-subtitle">Reference an official BMD/FFWC bulletin when issuing a flood alert.</p>
 
 <div class="row">
     <div class="col-md-6">
-        <div class="disaster-panel">
+        <div class="disaster-panel" data-reveal data-reveal-delay="0.08">
             <form asp-action="Create">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="mb-3">

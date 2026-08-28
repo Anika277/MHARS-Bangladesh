@@ -2,10 +2,10 @@
 @{
     ViewData["Title"] = "Shelter Directory";
 }
-<div class="page-title"><i class="bi bi-house-door-fill me-1"></i> Shelter Directory</div>
+<div class="page-title" data-reveal><i class="bi bi-house-door-fill me-1"></i> Shelter Directory</div>
 <p class="page-subtitle">Search verified shelters by district or name.</p>
 
-<div class="disaster-panel">
+<div class="disaster-panel" data-reveal>
     <form method="get" class="row g-2 align-items-end">
         <div class="col-md-4">
             <label class="form-label">Search</label>
@@ -40,7 +40,7 @@
 
 @if (!Model.Any())
 {
-    <div class="alert alert-warning">No shelters found.</div>
+    <div class="alert alert-warning" data-reveal>No shelters found.</div>
 }
 else
 {
@@ -50,7 +50,7 @@ else
                 <thead>
                     <tr><th>Name</th><th>District</th><th>Address</th><th>Capacity</th><th>Contact</th>@if (User.IsInRole("Admin")) { <th></th> }</tr>
                 </thead>
-                <tbody>
+                <tbody data-reveal-group>
                     @foreach (var s in Model)
                     {
                         <tr>
