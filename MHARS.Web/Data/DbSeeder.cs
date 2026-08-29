@@ -14,10 +14,16 @@ public static class DbSeeder
 
         await db.Database.MigrateAsync();
 
-        const string adminRole = "Admin";
-        if (!await roleManager.RoleExistsAsync(adminRole))
-            await roleManager.CreateAsync(new IdentityRole(adminRole));
+        // we need Admin + Citizen roles to exist before anything else runs,
+        // otherwise AddToRoleAsync / [Authorize(Roles="Citizen")] will just blow up
+        string[] roles = ["Admin", "Citizen"];
+        foreach (var role in roles)
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
+        }
 
+        // seed one admin account so we can actually log in and test things
         const string adminEmail = "admin@mhars.gov.bd";
         if (await userManager.FindByEmailAsync(adminEmail) is null)
         {
@@ -28,9 +34,10 @@ public static class DbSeeder
                 EmailConfirmed = true
             };
             await userManager.CreateAsync(admin, "Admin@123");
-            await userManager.AddToRoleAsync(admin, adminRole);
+            await userManager.AddToRoleAsync(admin, "Admin");
         }
 
+        // shelters
         if (!await db.Shelters.AnyAsync())
         {
             db.Shelters.AddRange(
@@ -45,6 +52,7 @@ public static class DbSeeder
             );
         }
 
+        // a handful of flood/earthquake alerts so the dashboard isn't empty
         if (!await db.Alerts.AnyAsync())
         {
             db.Alerts.AddRange(
@@ -56,6 +64,7 @@ public static class DbSeeder
             );
         }
 
+        // do's and don'ts for the safety guidance page
         if (!await db.SafetyGuidelines.AnyAsync())
         {
             db.SafetyGuidelines.AddRange(

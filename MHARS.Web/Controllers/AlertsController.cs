@@ -11,18 +11,21 @@ namespace MHARS.Web.Controllers;
 public class AlertsController(ApplicationDbContext db) : Controller
 {
     public async Task<IActionResult> Index(string? district, HazardType? hazard)
-    {
-        var query = db.Alerts.AsNoTracking().OrderByDescending(a => a.IssuedAt).AsQueryable();
+{
+    var query = db.Alerts.AsNoTracking().OrderByDescending(a => a.IssuedAt).AsQueryable();
 
-        if (!string.IsNullOrEmpty(district) && district != "All")
-            query = query.Where(a => a.District == district);
-        if (hazard.HasValue)
-            query = query.Where(a => a.HazardType == hazard.Value);
+    if (!string.IsNullOrEmpty(district) && district != "All")
+        query = query.Where(a => a.District == district);
 
-        ViewBag.Districts = Districts.List;
-        ViewBag.SelectedDistrict = district ?? "All";
-        return View(await query.ToListAsync());
-    }
+    if (hazard.HasValue)
+        query = query.Where(a => a.HazardType == hazard.Value);
+
+    ViewBag.Districts = Districts.List;
+    ViewBag.SelectedDistrict = district ?? "All";
+    ViewBag.SelectedHazard = hazard;
+
+    return View(await query.ToListAsync());
+}
 
     public async Task<IActionResult> Details(int? id)
     {

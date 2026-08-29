@@ -1,6 +1,8 @@
 @model List<MHARS.Web.Models.Alert>
 @{
     ViewData["Title"] = "All Alerts";
+    var selectedDistrict = ViewBag.SelectedDistrict as string ?? "All";
+    var selectedHazard = ViewBag.SelectedHazard as MHARS.Web.Models.HazardType?;
 }
 <div class="page-title" data-reveal>All Hazard Alerts</div>
 <p class="page-subtitle">District-wise flood and earthquake alerts issued by the authority.</p>
@@ -10,32 +12,39 @@
         <div class="col-auto">
             <label class="form-label">District</label>
             <select name="district" class="form-select" onchange="this.form.submit()">
-                <option value="All">All Districts</option>
-                @{
-                    var selected = ViewBag.Districts != null && ViewBag.SelectedDistrict != null ? (string)ViewBag.SelectedDistrict : "All";
-                }
+                <option value="All" selected="@(selectedDistrict == "All")">All Districts</option>
                 @if (ViewBag.Districts is string[] districts)
                 {
                     @foreach (var d in districts)
                     {
-                        if (selected == d)
-                        {
-                            <option value="@d" selected>@d</option>
-                        }
-                        else
-                        {
-                            <option value="@d">@d</option>
-                        }
+                        <option value="@d" selected="@(selectedDistrict == d)">@d</option>
                     }
                 }
             </select>
         </div>
         <div class="col-auto">
-            @if (User.IsInRole("Admin"))
-            {
-                <a class="btn btn-brand-action" asp-action="Create"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</a>
-            }
+<div class="col-auto">
+    <label class="form-label">Hazard</label>
+    <select name="hazard" class="form-select" onchange="this.form.submit()">
+        <option value="" selected="@(selectedHazard == null)">All Hazards</option>
+        <option value="1" selected="@(selectedHazard == MHARS.Web.Models.HazardType.Flood)">Flood</option>
+        <option value="2" selected="@(selectedHazard == MHARS.Web.Models.HazardType.Earthquake)">Earthquake</option>
+    </select>
+</div>
+
+@if (User.IsInRole("Admin"))
+{
+    <div class="col-auto">
+        <a class="btn btn-brand-action" asp-action="Create"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</a>
+    </div>
+}
         </div>
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="col-auto">
+                <a class="btn btn-brand-action" asp-action="Create"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</a>
+            </div>
+        }
     </form>
 </div>
 
@@ -59,10 +68,13 @@
                     <tr>
                         <td>@a.HazardType</td>
                         <td>@a.District</td>
-                        <td class="fw-semibold">@a.Title</td>
+                        <td class="fw-semibold"><a asp-action="Details" asp-route-id="@a.Id">@a.Title</a></td>
                         <td><span class="badge text-bg-@badge font-heading">@a.Severity</span></td>
                         <td>@a.IssuedAt.ToString("dd MMM yyyy hh:mm")</td>
                         <td>@a.IssuedBy</td>
+
+                        @* only admins get edit/delete buttons, everyone else just views *@
+
                         @if (User.IsInRole("Admin"))
                         {
                             <td class="text-nowrap">
