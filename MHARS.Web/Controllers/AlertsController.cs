@@ -11,23 +11,21 @@ namespace MHARS.Web.Controllers;
 public class AlertsController(ApplicationDbContext db) : Controller
 {
     public async Task<IActionResult> Index(string? district, HazardType? hazard)
-    {
-        var query = db.Alerts.AsNoTracking().OrderByDescending(a => a.IssuedAt).AsQueryable();
+{
+    var query = db.Alerts.AsNoTracking().OrderByDescending(a => a.IssuedAt).AsQueryable();
 
-        if (!string.IsNullOrEmpty(district) && district != "All")
-            query = query.Where(a => a.District == district);
-        if (hazard.HasValue)
-            query = query.Where(a => a.HazardType == hazard.Value);
+    if (!string.IsNullOrEmpty(district) && district != "All")
+        query = query.Where(a => a.District == district);
 
-        ViewBag.Districts = Districts.List;
+    if (hazard.HasValue)
+        query = query.Where(a => a.HazardType == hazard.Value);
 
-        // the view needs these to keep the dropdowns showing the right selection
-        // after you filter (was missing before, dropdowns kept resetting)
-        ViewBag.SelectedDistrict = district ?? "All";
-        ViewBag.SelectedHazard = hazard;
+    ViewBag.Districts = Districts.List;
+    ViewBag.SelectedDistrict = district ?? "All";
+    ViewBag.SelectedHazard = hazard;
 
-        return View(await query.ToListAsync());
-    }
+    return View(await query.ToListAsync());
+}
 
     public async Task<IActionResult> Details(int? id)
     {
@@ -41,6 +39,9 @@ public class AlertsController(ApplicationDbContext db) : Controller
     public IActionResult Create()
     {
         PopulateDropdowns();
+        ViewBag.HazardList = new SelectList(
+            new[] { new { Value = HazardType.Flood, Text = "Flood" } },
+            "Value", "Text");
         return View();
     }
 
@@ -52,6 +53,9 @@ public class AlertsController(ApplicationDbContext db) : Controller
         if (!ModelState.IsValid)
         {
             PopulateDropdowns();
+            ViewBag.HazardList = new SelectList(
+                new[] { new { Value = HazardType.Flood, Text = "Flood" } },
+                "Value", "Text");
             return View(alert);
         }
         alert.IssuedAt = DateTime.UtcNow;
