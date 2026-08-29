@@ -32,9 +32,25 @@
     </div>
 </div>
 
-<div class="disaster-panel" data-reveal>
-    <div class="panel-header"><span><i class="bi bi-bar-chart me-1"></i> Alerts Issued per District</span></div>
-    <canvas id="districtChart" height="100"></canvas>
+<div class="row g-3" data-reveal-group>
+    <div class="col-12 col-lg-6">
+        <div class="disaster-panel" data-reveal>
+            <div class="panel-header"><span><i class="bi bi-bar-chart me-1"></i> Alerts Issued per District</span></div>
+            <canvas id="districtChart" height="100"></canvas>
+        </div>
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="disaster-panel" data-reveal>
+            <div class="panel-header"><span><i class="bi bi-graph-up me-1"></i> Alerts Over Time (by Month)</span></div>
+            <canvas id="monthChart" height="100"></canvas>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="disaster-panel" data-reveal>
+            <div class="panel-header"><span><i class="bi bi-pie-chart me-1"></i> Severity Breakdown</span></div>
+            <canvas id="severityChart" height="80"></canvas>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -56,6 +72,37 @@
                 animation: { duration: 1200, easing: 'easeOutExpo' },
                 scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
             }
+        });
+                new Chart(document.getElementById('monthChart'), {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(ViewBag.MonthLabels),
+                datasets: [{
+                    label: 'Alerts issued',
+                    data: @Html.Raw(ViewBag.MonthData),
+                    borderColor: '#1A6B4A',
+                    backgroundColor: 'rgba(26, 107, 74, 0.15)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                animation: { duration: 1200, easing: 'easeOutExpo' },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        new Chart(document.getElementById('severityChart'), {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(ViewBag.SeverityLabels),
+                datasets: [{
+                    data: @Html.Raw(ViewBag.SeverityData),
+                    backgroundColor: ['#27AE60', '#E67E22', '#D9383A']
+                }]
+            },
+            options: { animation: { duration: 1200 } }
         });
     </script>
 }
