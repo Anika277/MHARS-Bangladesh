@@ -23,28 +23,11 @@
             </select>
         </div>
         <div class="col-auto">
-<div class="col-auto">
-    <label class="form-label">Hazard</label>
-    <select name="hazard" class="form-select" onchange="this.form.submit()">
-        <option value="" selected="@(selectedHazard == null)">All Hazards</option>
-        <option value="1" selected="@(selectedHazard == MHARS.Web.Models.HazardType.Flood)">Flood</option>
-        <option value="2" selected="@(selectedHazard == MHARS.Web.Models.HazardType.Earthquake)">Earthquake</option>
-    </select>
-</div>
-
-@if (User.IsInRole("Admin"))
-{
-    <div class="col-auto">
-        <a class="btn btn-brand-action" asp-action="Create"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</a>
-    </div>
-}
-        </div>
-        @if (User.IsInRole("Admin"))
-        {
-            <div class="col-auto">
+            @if (User.IsInRole("Admin"))
+            {
                 <a class="btn btn-brand-action" asp-action="Create"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</a>
-            </div>
-        }
+            }
+        </div>
     </form>
 </div>
 
