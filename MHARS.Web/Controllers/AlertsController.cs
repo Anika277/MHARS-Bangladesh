@@ -5,8 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using MHARS.Web.Data;
 using MHARS.Web.Models;
 using System.Security.Claims;
+using System.Text;
 
 namespace MHARS.Web.Controllers;
+
 
 public class AlertsController(ApplicationDbContext db) : Controller
 {
@@ -26,6 +28,40 @@ public class AlertsController(ApplicationDbContext db) : Controller
 
     return View(await query.ToListAsync());
 }
+
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ExportCsv()
+    {
+        var alerts = await db.Alerts.AsNoTracking()
+            .OrderByDescending(a => a.IssuedAt)
+            .ToListAsync();
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Id,HazardType,District,Title,Severity,IssuedAt,IssuedBy,SourceReference");
+        foreach (var a in alerts)
+        {
+            sb.AppendLine(string.Join(",",
+                a.Id,
+                a.HazardType,
+                Escape(a.District),
+                Escape(a.Title),
+                a.Severity,
+                a.IssuedAt.ToString("yyyy-MM-dd HH:mm"),
+                Escape(a.IssuedBy),
+                Escape(a.SourceReference)));
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return File(bytes, "text/csv", $"alerts-export-{DateTime.UtcNow:yyyyMMdd}.csv");
+    }
+
+    private static string Escape(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return "";
+        return value.Contains(',') || value.Contains('"')
+            ? $"\"{value.Replace("\"", "\"\"")}\""
+            : value;
+    }
 
     public async Task<IActionResult> Details(int? id)
     {

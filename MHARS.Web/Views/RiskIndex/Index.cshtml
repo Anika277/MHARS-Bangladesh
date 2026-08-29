@@ -1,0 +1,168 @@
+@model List<MHARS.Web.Models.DistrictRisk>
+@{
+    ViewData["Title"] = "Risk Index";
+    string selectedHazard = ViewBag.SelectedHazard;
+
+    string CategoryColor(string cat) => cat switch
+    {
+        "Very Low" => "#D6EEDD",
+        "Low" => "#8FD19E",
+        "Medium" => "#F5C242",
+        "High" => "#E8743B",
+        "Very High" => "#B23A2E",
+        _ => "#999999"
+    };
+    string BadgeClass(string cat) => cat switch
+    {
+        "Very High" => "danger",
+        "High" => "warning",
+        "Medium" => "primary",
+        "Low" => "info",
+        _ => "secondary"
+    };
+}
+
+<div class="page-title" data-reveal><i class="bi bi-graph-up-arrow me-1"></i> District Risk Index</div>
+<p class="page-subtitle">
+    Flood &amp; earthquake risk by district, derived from recorded alert history (frequency &amp; severity).
+    Internal analytical estimate — not an official government risk assessment.
+</p>
+
+<div class="disaster-panel" data-reveal>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-auto">
+            <label class="form-label small mb-1">Level</label>
+            <select class="form-select" disabled>
+                <option>District</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <label class="form-label small mb-1">Hazard</label>
+            <select name="hazard" class="form-select">
+                <option value="Overall" selected="@(selectedHazard == "Overall")">Overall (Flood + Earthquake)</option>
+                <option value="Flood" selected="@(selectedHazard == "Flood")">Flood</option>
+                <option value="Earthquake" selected="@(selectedHazard == "Earthquake")">Earthquake</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-brand-action"><i class="bi bi-arrow-repeat me-1"></i> Load Data</button>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3 mt-1" data-reveal-group>
+    <div class="col-12 col-lg-6">
+        <div class="disaster-panel">
+            <div class="panel-header"><span><i class="bi bi-map me-1"></i> Risk Map — @selectedHazard</span></div>
+            <div id="riskMap" style="height: 420px; border-radius: 8px;"></div>
+            <div class="d-flex flex-wrap gap-2 mt-2 small">
+                <span><span style="display:inline-block;width:12px;height:12px;background:#D6EEDD;border-radius:2px;"></span> Very Low</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#8FD19E;border-radius:2px;"></span> Low</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#F5C242;border-radius:2px;"></span> Medium</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#E8743B;border-radius:2px;"></span> High</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#B23A2E;border-radius:2px;"></span> Very High</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="disaster-panel">
+            <div class="panel-header"><span><i class="bi bi-pie-chart me-1"></i> Districts by Category — @selectedHazard</span></div>
+            <canvas id="riskPieChart" height="200"></canvas>
+        </div>
+        <div class="disaster-panel mt-3">
+            <canvas id="riskBarChart" height="140"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="disaster-panel mt-3" data-reveal>
+    <div class="panel-header"><span><i class="bi bi-table me-1"></i> Risk Information — Data Table</span></div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>District</th>
+                    <th>Flood Score</th>
+                    <th>Flood Risk</th>
+                    <th>Earthquake Score</th>
+                    <th>Earthquake Risk</th>
+                    <th>Overall Risk</th>
+                </tr>
+            </thead>
+            <tbody data-reveal-group>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@r.District</td>
+                        <td>@r.FloodScore</td>
+                        <td><span class="badge text-bg-@BadgeClass(r.FloodCategory)">@r.FloodCategory</span></td>
+                        <td>@r.EarthquakeScore</td>
+                        <td><span class="badge text-bg-@BadgeClass(r.EarthquakeCategory)">@r.EarthquakeCategory</span></td>
+                        <td><span class="badge text-bg-@BadgeClass(r.OverallCategory)">@r.OverallCategory</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const riskData = @Html.Raw(ViewBag.MapData);
+        const categoryColors = {
+            "Very Low": "#D6EEDD",
+            "Low": "#8FD19E",
+            "Medium": "#F5C242",
+            "High": "#E8743B",
+            "Very High": "#B23A2E"
+        };
+
+        const map = L.map('riskMap').setView([23.6850, 90.3563], 6.5);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        riskData.forEach(d => {
+            if (!d.Lat || !d.Lng) return;
+            L.circleMarker([d.Lat, d.Lng], {
+                radius: 12,
+                fillColor: categoryColors[d.Category] || '#999',
+                color: '#333',
+                weight: 1,
+                fillOpacity: 0.85
+            })
+            .bindTooltip(`${d.District}: ${d.Category} (score ${d.Score})`)
+            .addTo(map);
+        });
+
+        const catLabels = @Html.Raw(ViewBag.CategoryLabelsWithPercent);
+        const catCounts = @Html.Raw(ViewBag.CategoryCounts);
+        const catColors = ['#D6EEDD', '#8FD19E', '#F5C242', '#E8743B', '#B23A2E'];
+
+        new Chart(document.getElementById('riskPieChart'), {
+            type: 'pie',
+            data: {
+                labels: catLabels,
+                datasets: [{ data: catCounts, backgroundColor: catColors }]
+            },
+            options: { animation: { duration: 900 } }
+        });
+
+        new Chart(document.getElementById('riskBarChart'), {
+            type: 'bar',
+            data: {
+                labels: catLabels,
+                datasets: [{ label: 'Districts', data: catCounts, backgroundColor: catColors }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    </script>
+}
