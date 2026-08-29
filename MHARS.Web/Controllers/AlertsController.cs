@@ -20,6 +20,12 @@ public class AlertsController(ApplicationDbContext db) : Controller
             query = query.Where(a => a.HazardType == hazard.Value);
 
         ViewBag.Districts = Districts.List;
+
+        // the view needs these to keep the dropdowns showing the right selection
+        // after you filter (was missing before, dropdowns kept resetting)
+        ViewBag.SelectedDistrict = district ?? "All";
+        ViewBag.SelectedHazard = hazard;
+
         return View(await query.ToListAsync());
     }
 
