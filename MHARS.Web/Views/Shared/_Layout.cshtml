@@ -136,6 +136,9 @@
                     <li class="nav-item">
                         <a class="nav-link" asp-area="" asp-controller="Guidelines" asp-action="Index"><i class="bi bi-shield-check me-1"></i> Safety Guidance</a>
                     </li>
+                    <li class="nav-item">
+                         <a class="nav-link" asp-area="" asp-controller="RiskIndex" asp-action="Index"><i class="bi bi-graph-up-arrow me-1"></i> Risk Index</a>
+                    </li>
                     @if (User.IsInRole("Admin"))
                     {
                         <li class="nav-item dropdown">
@@ -144,6 +147,7 @@
                                 <li><a class="dropdown-item" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
                                 <li><a class="dropdown-item" asp-controller="Alerts" asp-action="Create">Issue Alert</a></li>
                                 <li><a class="dropdown-item" asp-controller="Shelters" asp-action="Create">Add Shelter</a></li>
+
                             </ul>
                         </li>
                     }
