@@ -9,6 +9,7 @@ using System.Text;
 
 namespace MHARS.Web.Controllers;
 
+
 public class AlertsController(ApplicationDbContext db) : Controller
 {
     public async Task<IActionResult> Index(string? district, HazardType? hazard)

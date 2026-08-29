@@ -26,6 +26,7 @@
             @if (User.IsInRole("Admin"))
             {
                 <a class="btn btn-brand-action" asp-action="Create"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</a>
+                 <a class="btn btn-outline-secondary" asp-action="ExportCsv"><i class="bi bi-download me-1"></i> Export CSV</a>
             }
         </div>
     </form>
