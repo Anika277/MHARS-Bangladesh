@@ -2,11 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MHARS.Web.Data;
 using MHARS.Web.Models;
-using MHARS.Web.Services;
 
 namespace MHARS.Web.Controllers;
 
-public class HomeController(ApplicationDbContext db, IUsgsEarthquakeService usgs) : Controller
+public class HomeController(ApplicationDbContext db) : Controller
 {
     public async Task<IActionResult> Index(string? district, HazardType? hazard)
     {
@@ -23,14 +22,29 @@ public class HomeController(ApplicationDbContext db, IUsgsEarthquakeService usgs
         if (hazard.HasValue)
             filtered = filtered.Where(a => a.HazardType == hazard.Value);
 
-        var earthquakes = await usgs.GetRecentEarthquakesAsync();
+        // Reads our own table now instead of calling USGS on every page load.
+        // Three reasons: the home page must render when USGS is unreachable, a visitor
+        // must never wait on a third-party network call, and one visitor must not cost
+        // one external request. The background sync service keeps this table fresh.
+        //
+        // Scope <= Regional means "in Bangladesh, or within the 700 km felt radius" —
+        // a Myanmar quake that shakes Chattogram belongs on the national home page.
+        // Magnitude != null reproduces the old service's filter: USGS occasionally
+        // publishes an event before a magnitude is assigned, and the card has nothing
+        // to show for those.
+        var earthquakes = await db.EarthquakeEvents.AsNoTracking()
+            .Where(e => e.Scope <= RegionScope.Regional && e.Magnitude != null)
+            .OrderByDescending(e => e.OccurredAtUtc)
+            .Take(3)
+            .ToListAsync();
+
         var shelters = await db.Shelters.AsNoTracking()
             .OrderByDescending(s => s.Capacity)
             .Take(2)
             .ToListAsync();
 
         ViewBag.AllAlerts = allAlerts;
-        ViewBag.Earthquakes = earthquakes.Take(3).ToList();
+        ViewBag.Earthquakes = earthquakes;
         ViewBag.Shelters = shelters;
         ViewBag.Districts = Districts.List;
         ViewBag.SelectedDistrict = district ?? "All";
