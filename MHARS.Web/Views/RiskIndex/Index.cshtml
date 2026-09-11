@@ -3,15 +3,7 @@
     ViewData["Title"] = "Risk Index";
     string selectedHazard = ViewBag.SelectedHazard;
 
-    string CategoryColor(string cat) => cat switch
-    {
-        "Very Low" => "#D6EEDD",
-        "Low" => "#8FD19E",
-        "Medium" => "#F5C242",
-        "High" => "#E8743B",
-        "Very High" => "#B23A2E",
-        _ => "#999999"
-    };
+    
     string BadgeClass(string cat) => cat switch
     {
         "Very High" => "danger",
@@ -27,6 +19,11 @@
     Flood &amp; earthquake risk by district, derived from recorded alert history (frequency &amp; severity).
     Internal analytical estimate — not an official government risk assessment.
 </p>
+
+@if (ViewBag.CoverageNote is string coverage)
+{
+    <p class="small text-muted">@coverage</p>
+}
 
 <div class="disaster-panel" data-reveal>
     <form method="get" class="row g-2 align-items-end">

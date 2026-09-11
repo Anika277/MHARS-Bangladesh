@@ -1,41 +1,310 @@
-@model List<MHARS.Web.Services.EarthquakeEvent>
+@using MHARS.Web.Models
+@using MHARS.Web.Services
+@model MHARS.Web.Models.ViewModels.EarthquakeDashboardViewModel
 @{
-    ViewData["Title"] = "Live Earthquakes (USGS)";
-}
-<div class="page-title" data-reveal><i class="bi bi-activity me-1"></i> Live Earthquake Feed</div>
-<p class="page-subtitle">
-    Real events from the last 24 hours, fetched live from the
-    <a href="https://earthquake.usgs.gov/earthquakes/feed/" target="_blank" rel="noopener">USGS Earthquake Hazards Program</a> public API.
-    Auto-colored by magnitude: <span class="badge text-bg-success">&lt; 4.0 Minor</span>
-    <span class="badge text-bg-warning">4.0–6.0 Moderate</span> <span class="badge text-bg-danger">&gt; 6.0 Severe</span>
-</p>
+    ViewData["Title"] = "Earthquakes";
 
-@if (!Model.Any())
-{
-    <div class="alert alert-warning" data-reveal><i class="bi bi-wifi-off me-1"></i> Could not reach the USGS feed right now. Please try again later.</div>
+    var activeTab = Model.Tabs.FirstOrDefault(t => t.Scope == Model.ActiveScope);
+    var activeKey = activeTab?.Key ?? "bangladesh";
+
+    // Magnitude 2.0 maps to a stub, 9.0 fills the gauge. Linear on magnitude, which is
+    // itself logarithmic in energy — so the bar reads as "how big was the number", not
+    // "how much energy", and the caption says so.
+    string BarWidth(double? mag)
+    {
+        if (mag is null) return "6%";
+        var pct = Math.Clamp(((mag.Value - 2.0) / 7.0) * 100.0, 6.0, 100.0);
+        return pct.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "%";
+    }
+
+    string SyncDot()
+    {
+        if (Model.SyncError is not null) return "down";
+        if (Model.LastSyncUtc is null) return "down";
+        return (DateTime.UtcNow - Model.LastSyncUtc.Value).TotalMinutes > 60 ? "stale" : "";
+    }
 }
-else
-{
-    <div class="disaster-panel">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr><th>Magnitude</th><th>Risk Level</th><th>Location</th><th>Depth</th><th>Time (UTC)</th><th></th></tr>
-                </thead>
-                <tbody data-reveal-group>
-                    @foreach (var e in Model)
-                    {
-                        <tr>
-                            <td><strong class="font-heading">@e.Magnitude.ToString("0.0")</strong></td>
-                            <td><span class="badge text-bg-@e.BadgeClass font-heading">@e.SeverityLabel</span></td>
-                            <td>@e.Place</td>
-                            <td>@e.DepthKm km</td>
-                            <td>@e.TimeUtc.ToString("dd MMM yyyy, hh:mm tt")</td>
-                            <td><a href="@e.Url" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">Details</a></td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="~/css/earthquakes.css" asp-append-version="true" />
+
+<div class="quake">
+
+    <!-- ============ Hero readout ============ -->
+    <div class="quake-readout">
+        <div>
+            <h1>ভূমিকম্প পর্যবেক্ষণ / Earthquake monitor</h1>
+            <p class="sub">
+                বাংলাদেশ ও আশেপাশের ভূমিকম্পের তথ্য সরাসরি মার্কিন ভূতাত্ত্বিক জরিপ সংস্থার
+                (USGS) রেকর্ড থেকে নেওয়া হয়। সব সময় বাংলাদেশ সময় (BST, UTC+৬) অনুযায়ী দেখানো হচ্ছে।
+            </p>
+        </div>
+
+        @if (Model.MostRecent is not null)
+        {
+            var m = Model.MostRecent;
+            <div class="quake-latest">
+                <span class="mag @m.MagnitudeBand">@(m.Magnitude?.ToString("0.0") ?? "—")</span>
+                <span class="where">@m.Place</span>
+                <span class="when">
+                    @BdTime.ToBst(m.OccurredAtUtc).ToString("dd MMM yyyy, HH:mm") BST — @BdTime.Relative(m.OccurredAtUtc)
+                </span>
+            </div>
+        }
+    </div>
+
+    <!-- ============ Sync bar ============ -->
+    <div class="quake-sync">
+        <span>
+            <span class="pulse @SyncDot()"></span>
+            @if (Model.LastSyncUtc is not null)
+            {
+                <text>শেষ হালনাগাদ @BdTime.ToBst(Model.LastSyncUtc.Value).ToString("HH:mm") BST (@BdTime.Relative(Model.LastSyncUtc.Value))</text>
+            }
+            else
+            {
+                <text>এখনো কোনো হালনাগাদ হয়নি — Awaiting first sync</text>
+            }
+        </span>
+
+        <span class="quake-sync-actions">
+            <form asp-action="Refresh" method="post" class="d-inline">
+                <input type="hidden" name="scope" value="@activeKey" />
+                <input type="hidden" name="days" value="@Model.LookbackDays" />
+                <button type="submit" class="quake-refresh"><i class="bi bi-arrow-clockwise me-1"></i>এখনই হালনাগাদ করুন / Refresh now</button>
+            </form>
+
+            @* Repairs Scope / distance / nearest-division on rows written under older
+               classification rules. Gate behind Admin before any real deployment. *@
+            <form asp-action="Reclassify" method="post" class="d-inline">
+                <input type="hidden" name="scope" value="@activeKey" />
+                <input type="hidden" name="days" value="@Model.LookbackDays" />
+                <button type="submit" class="quake-refresh secondary" title="Recompute region, distance and nearest division for every stored event"><i class="bi bi-crosshair me-1"></i>Reclassify</button>
+            </form>
+        </span>
+    </div>
+
+    @if (TempData["SyncMessage"] is string syncMessage)
+    {
+        <div class="quake-message">@syncMessage</div>
+    }
+
+    @if (Model.SyncError is not null)
+    {
+        <div class="quake-message error">
+            USGS থেকে তথ্য আনতে সমস্যা হচ্ছে। নিচের তালিকা সর্বশেষ সফল হালনাগাদের তথ্য দেখাচ্ছে।
+            <br />Sync error: @Model.SyncError
+        </div>
+    }
+
+    <!-- ============ Scope tabs ============ -->
+    <nav class="quake-tabs" aria-label="এলাকা নির্বাচন">
+        @foreach (var tab in Model.Tabs)
+        {
+            <a class="quake-tab"
+               asp-action="Index"
+               asp-route-scope="@tab.Key"
+               asp-route-days="@Model.LookbackDays"
+               aria-current="@(tab.Scope == Model.ActiveScope ? "page" : null)">
+                <span class="name">@tab.LabelBn <span style="font-weight:400;">/ @tab.LabelEn</span></span>
+                <span class="meta">@tab.Count টি ঘটনা</span>
+            </a>
+        }
+    </nav>
+
+    @if (activeTab is not null)
+    {
+        <p class="quake-caption">@activeTab.Caption — গত @Model.LookbackDays দিন</p>
+    }
+
+    <!-- ============ Stats ============ -->
+    <div class="quake-stats">
+        <div class="quake-stat">
+            <span class="value">@Model.CountLast24Hours</span>
+            <span class="label">গত ২৪ ঘণ্টায় / Last 24 hours</span>
+        </div>
+        <div class="quake-stat">
+            <span class="value">@Model.CountLast7Days</span>
+            <span class="label">গত ৭ দিনে / Last 7 days</span>
+        </div>
+        <div class="quake-stat">
+            <span class="value">@(Model.Strongest?.Magnitude?.ToString("0.0") ?? "—")</span>
+            <span class="label">সর্বোচ্চ মাত্রা / Strongest recorded</span>
+        </div>
+        <div class="quake-stat">
+            <span class="value">@(Model.MostRecent is not null ? Model.MostRecent.DistanceFromDhakaKm.ToString("0") : "—")</span>
+            <span class="label">ঢাকা থেকে দূরত্ব, কিমি / From Dhaka, km</span>
         </div>
     </div>
+
+    <!-- ============ Map ============ -->
+    <div id="quakeMap" class="quake-map" role="img" aria-label="মানচিত্রে ভূমিকম্পের অবস্থান"></div>
+    <p class="quake-map-note">
+        বৃত্তের আকার মাত্রা অনুযায়ী। মানচিত্র লোড হতে ইন্টারনেট সংযোগ প্রয়োজন।
+    </p>
+
+    <!-- ============ Event list ============ -->
+    @if (!Model.HasData)
+    {
+        <div class="quake-empty">
+            <h2>এই এলাকায় নির্ধারিত সময়ে কোনো ভূমিকম্প রেকর্ড হয়নি</h2>
+            <p>
+                বাংলাদেশের ভেতরে বড় ভূমিকম্প বিরল, তাই এই তালিকা খালি থাকা স্বাভাবিক এবং ভালো খবর।
+                আশেপাশের ফল্ট লাইনের কার্যকলাপ দেখতে “আঞ্চলিক উৎস” ট্যাবে যান।
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="quake-list">
+            @foreach (var e in Model.Events)
+            {
+                <div class="quake-row">
+                    <div class="quake-gauge @e.MagnitudeBand">
+                        <span class="num">@(e.Magnitude?.ToString("0.0") ?? "—")</span>
+                        <div class="bar" style="width:@BarWidth(e.Magnitude)"></div>
+                    </div>
+
+                    <div class="quake-where">
+                        <p class="place">
+                            @e.Place
+                            @if (e.IsShallow)
+                            {
+                                <span class="quake-flag shallow" title="৭০ কিমি-র কম গভীরতা — ভূপৃষ্ঠে বেশি অনুভূত হয়">অগভীর</span>
+                            }
+                            @if (e.TsunamiFlag)
+                            {
+                                <span class="quake-flag tsunami">সুনামি সতর্কতা</span>
+                            }
+                            @if (string.Equals(e.ReviewStatus, "automatic", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="quake-flag unreviewed" title="স্বয়ংক্রিয়ভাবে নির্ণীত, এখনো বিশেষজ্ঞ যাচাই হয়নি">প্রাথমিক</span>
+                            }
+                        </p>
+                        <p class="detail">
+                            গভীরতা @e.DepthKm.ToString("0.#") কিমি &nbsp;|&nbsp;
+                            ঢাকা থেকে @e.DistanceFromDhakaKm.ToString("0") কিমি &nbsp;|&nbsp;
+                            নিকটতম বিভাগ @SeismicGeography.BanglaNameFor(e.NearestDivision) (@e.NearestDivisionKm.ToString("0") কিমি)
+                        </p>
+                    </div>
+
+                    <div class="quake-when">
+                        <span class="clock">@BdTime.ToBst(e.OccurredAtUtc).ToString("dd MMM, HH:mm")</span>
+                        <span class="ago">@BdTime.Relative(e.OccurredAtUtc)</span>
+                        @if (!string.IsNullOrEmpty(e.DetailsUrl))
+                        {
+                            <a href="@e.DetailsUrl" target="_blank" rel="noopener noreferrer">USGS রেকর্ড</a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <p class="quake-footnote">
+        তথ্যসূত্র: United States Geological Survey (USGS) Earthquake Hazards Program, FDSN event web service.
+        “প্রাথমিক” চিহ্নিত ঘটনাগুলো স্বয়ংক্রিয়ভাবে নির্ণীত; বিশেষজ্ঞ যাচাইয়ের পর মাত্রা বা অবস্থান বদলাতে পারে।
+        মাত্রার দণ্ডটি সংখ্যার অনুপাতে আঁকা — শক্তির অনুপাতে নয়, কারণ রিখটার স্কেল লগারিদমিক।
+        এই পাতা পর্যবেক্ষণের জন্য; সরকারি সতর্কতার জন্য বাংলাদেশ আবহাওয়া অধিদপ্তর ও দুর্যোগ ব্যবস্থাপনা অধিদপ্তরের বিজ্ঞপ্তি অনুসরণ করুন।
+    </p>
+
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        (function () {
+            var el = document.getElementById('quakeMap');
+            if (!el) { return; }
+
+            // No internet in the exam hall means no Leaflet. Say so rather than
+            // leaving an empty grey rectangle that looks like a broken page.
+            if (typeof L === 'undefined') {
+                el.innerHTML = '<div class="quake-map-fallback">মানচিত্র লোড করা যায়নি — ইন্টারনেট সংযোগ নেই।<br>নিচের তালিকা আমাদের নিজস্ব ডেটাবেস থেকে আসছে, সেটি স্বাভাবিকভাবে কাজ করছে।</div>';
+                return;
+            }
+
+            var points = @Html.Raw(Model.MapPointsJson);
+            var scope = '@activeKey';
+
+            // Each tab covers a different area, so each needs its own opening view.
+            // One shared zoom meant the Bangladesh tab opened on half a continent.
+            var views = {
+                bangladesh: { center: [23.70, 90.35], zoom: 7, maxFit: 9, scale: 3.2 },
+                regional:   { center: [24.00, 91.50], zoom: 6, maxFit: 7, scale: 2.8 },
+                asia:       { center: [25.00, 100.0], zoom: 3, maxFit: 5, scale: 2.0 }
+            };
+            var cfg = views[scope] || views.bangladesh;
+
+            var map = L.map('quakeMap', { scrollWheelZoom: false }).setView(cfg.center, cfg.zoom);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 12,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // A fixed reference point, so an empty map still tells you where you are
+            // and every marker can be read as a distance from the capital.
+            L.circleMarker(cfg.center, {
+                radius: 5, color: '#10231D', weight: 2,
+                fillColor: '#FFFFFF', fillOpacity: 1
+            }).addTo(map).bindTooltip('ঢাকা / Dhaka', { permanent: false });
+
+            var colours = {
+                minor: '#006A4E', light: '#0F8C63', moderate: '#C9820C',
+                strong: '#E2662C', major: '#F42A41', unknown: '#5B6B65'
+            };
+
+            var bounds = [];
+
+            points.forEach(function (p) {
+                var colour = colours[p.band] || colours.unknown;
+                var radius = Math.max(3, (p.mag - 2.5) * cfg.scale);
+
+                var marker = L.circleMarker([p.lat, p.lon], {
+                    radius: radius,
+                    color: colour,
+                    fillColor: colour,
+                    fillOpacity: 0.42,
+                    weight: 1.4
+                }).addTo(map);
+
+                var html = '<strong>M ' + p.mag.toFixed(1) + '</strong><br>' +
+                           p.place + '<br>গভীরতা ' + p.depth.toFixed(1) + ' কিমি<br>' + p.time;
+
+                if (p.url) {
+                    html += '<br><a href="' + p.url + '" target="_blank" rel="noopener noreferrer">USGS</a>';
+                }
+
+                marker.bindPopup(html);
+                bounds.push([p.lat, p.lon]);
+            });
+
+            if (bounds.length > 1) {
+                map.fitBounds(bounds, { padding: [30, 30], maxZoom: cfg.maxFit });
+            } else if (bounds.length === 1) {
+                map.setView(bounds[0], cfg.maxFit);
+            } else {
+                var note = L.control({ position: 'topright' });
+                note.onAdd = function () {
+                    var div = L.DomUtil.create('div', 'quake-map-empty');
+                    div.innerHTML = 'এই এলাকায় নির্ধারিত সময়ে কোনো ঘটনা নেই';
+                    return div;
+                };
+                note.addTo(map);
+            }
+
+            // Leaflet measures its container once, at construction. The panel is inside
+            // a responsive grid and the layout's Mobile Simulator changes its width
+            // without a window resize, so without this the tiles stay sized for the old
+            // width and the map appears cropped.
+            setTimeout(function () { map.invalidateSize(); }, 200);
+
+            if (window.ResizeObserver) {
+                new ResizeObserver(function () { map.invalidateSize(); }).observe(el);
+            } else {
+                window.addEventListener('resize', function () { map.invalidateSize(); });
+            }
+        })();
+    </script>
 }

@@ -93,7 +93,7 @@
                     {
                         var top = earthquakes.OrderByDescending(e => e.Magnitude).First();
                         <span class="badge bg-dark bg-opacity-75 border border-light-subtle px-3 py-2 fw-medium">
-                            <i class="bi bi-activity text-warning me-1"></i> Seismic: M @top.Magnitude.ToString("0.0") — @top.SeverityLabel
+                           <i class="bi bi-activity text-warning me-1"></i> Seismic: M @(top.Magnitude?.ToString("0.0")) — @top.SeverityLabel
                         </span>
                     }
                 </div>
@@ -204,8 +204,8 @@
                         <a href="@e.Url" target="_blank" rel="noopener" class="event-feed-item">
                             <div class="event-icon-box @boxClass"><i class="bi bi-activity"></i></div>
                             <div>
-                                <div class="event-title">@e.Place (M @e.Magnitude.ToString("0.1"))</div>
-                                <div class="event-meta">Depth: @e.DepthKm km · @e.TimeUtc.ToLocalTime().ToString("dd MMM HH:mm") BST</div>
+                               <div class="event-title">@e.Place (M @(e.Magnitude?.ToString("0.0")))</div>
+                            <div class="event-meta">Depth: @e.DepthKm.ToString("0.#") km · @BdTime.ToBst(e.OccurredAtUtc).ToString("dd MMM HH:mm") BST</div>
                             </div>
                         </a>
                     }
