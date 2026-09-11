@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MHARS.Web.Data;
 using MHARS.Web.Models;
+using MHARS.Web.Models.ViewModels;
 
 namespace MHARS.Web.Controllers;
 
@@ -16,7 +17,7 @@ public class DashboardController(ApplicationDbContext db) : Controller
         var quakeCount = await db.Alerts.CountAsync(a => a.HazardType == HazardType.Earthquake);
         var shelters = await db.Shelters.CountAsync();
 
-                var perDistrict = await db.Alerts
+        var perDistrict = await db.Alerts
             .GroupBy(a => a.District)
             .Select(g => new { District = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)
@@ -45,5 +46,38 @@ public class DashboardController(ApplicationDbContext db) : Controller
         ViewBag.SeverityData = System.Text.Json.JsonSerializer.Serialize(bySeverity.Select(x => x.Count));
 
         return View(perDistrict);
+    }
+
+    public async Task<IActionResult> LiveActivity()
+    {
+        var vm = new LiveActivityViewModel
+        {
+            RecentUsers = await db.Users
+                .OrderByDescending(u => u.Id)
+                .Take(10)
+                .ToListAsync(),
+
+            RecentAlerts = await db.Alerts
+                .OrderByDescending(a => a.IssuedAt)
+                .Take(10)
+                .ToListAsync(),
+
+            RecentShelters = await db.Shelters
+                .Take(10)
+                .ToListAsync(),
+
+            RecentGuidelines = await db.SafetyGuidelines
+                .Take(10)
+                .ToListAsync(),
+
+            RecentEarthquakes = await db.EarthquakeEvents
+                .OrderByDescending(e => e.OccurredAtUtc)
+                .Take(10)
+                .ToListAsync(),
+
+            LastServerCheck = DateTime.Now
+        };
+
+        return View(vm);
     }
 }
