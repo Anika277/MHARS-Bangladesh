@@ -1,0 +1,56 @@
+@using MHARS.Web.Helpers
+@model MHARS.Web.Models.ViewModels.LiveActivityViewModel
+
+<meta http-equiv="refresh" content="4">
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>🔴 Live Database Activity</h2>
+        <span class="badge bg-success">Auto-refreshing every 4s</span>
+    </div>
+    <p class="text-muted">Last refreshed: @Model.LastServerCheck.ToString("yyyy-MM-dd HH:mm:ss")</p>
+
+    @{
+        void RenderTable<T>(string title, List<T> items)
+        {
+            <h4 class="mt-4">@title (@items.Count)</h4>
+            if (items.Count == 0)
+            {
+                <p class="text-muted">No records yet.</p>
+            }
+            else
+            {
+                var props = ObjectDisplayHelper.GetSimpleProperties(typeof(T));
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                @foreach (var p in props)
+                                {
+                                    <th>@p.Name</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in items)
+                            {
+                                <tr>
+                                    @foreach (var p in props)
+                                    {
+                                        <td>@ObjectDisplayHelper.GetValue(item!, p)</td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+    }
+
+    @{ RenderTable("Recent Users (Signups/Logins)", Model.RecentUsers); }
+    @{ RenderTable("Recent Alerts", Model.RecentAlerts); }
+    @{ RenderTable("Recent Shelters", Model.RecentShelters); }
+    @{ RenderTable("Recent Safety Guidelines", Model.RecentGuidelines); }
+    @{ RenderTable("Recent Earthquake Events (USGS live sync)", Model.RecentEarthquakes); }
+</div>
