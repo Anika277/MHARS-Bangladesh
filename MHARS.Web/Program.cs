@@ -1,25 +1,36 @@
+using DotNetEnv;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;   // needed for IOptions<T>; not in the implicit usings
+using Microsoft.Extensions.Options;
 using MHARS.Web.Data;
+using MHARS.Web.Models.Agent;
 using MHARS.Web.Services;
+
+// Load .env BEFORE CreateBuilder so builder.Configuration sees the values.
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ---------------------------------------------------------------------------
+//  Database
+// ---------------------------------------------------------------------------
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString, sql =>
     {
-        // Retry on transient network / LocalDB startup failures.
         sql.EnableRetryOnFailure(
             maxRetryCount: 3,
             maxRetryDelay: TimeSpan.FromSeconds(5),
             errorNumbersToAdd: null);
     }));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// ---------------------------------------------------------------------------
+//  Identity
+// ---------------------------------------------------------------------------
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -34,17 +45,14 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
 
+// ---------------------------------------------------------------------------
+//  MVC + Razor Pages
+// ---------------------------------------------------------------------------
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 // ---------------------------------------------------------------------------
 //  USGS earthquake ingestion
-//
-//  A named HttpClient, not AddHttpClient<TService>. The typed-client overload
-//  registers the service as TRANSIENT, and this service holds a scoped
-//  DbContext — that combination works when resolved inside a request scope and
-//  throws when resolved from the root provider. A named client plus an explicit
-//  AddScoped removes the trap entirely.
 // ---------------------------------------------------------------------------
 builder.Services.Configure<UsgsOptions>(builder.Configuration.GetSection("Usgs"));
 
@@ -55,13 +63,19 @@ builder.Services.AddHttpClient("usgs", (sp, client) =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd(opts.UserAgent);
 });
 
-builder.Services.AddSingleton<UsgsSyncStatus>();      // singleton: survives across scopes
-builder.Services.AddScoped<UsgsEarthquakeService>();  // scoped: it holds a DbContext
+builder.Services.AddSingleton<UsgsSyncStatus>();
+builder.Services.AddScoped<UsgsEarthquakeService>();
 builder.Services.AddHostedService<UsgsSyncBackgroundService>();
+
+// ---------------------------------------------------------------------------
+//  Groq AI agent
+// ---------------------------------------------------------------------------
+builder.Services.Configure<GroqOptions>(builder.Configuration.GetSection("Groq"));
+builder.Services.AddHttpClient<IGroqAgentService, GroqAgentService>();
 
 var app = builder.Build();
 
-// Apply migrations, then seed. Logged so startup failures are visible.
+// Apply migrations, then seed.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

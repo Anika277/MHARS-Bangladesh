@@ -10,3 +10,8 @@ obj/
 
 # Local settings (never commit secrets/connection strings)
 appsettings.Development.json
+
+# Local secrets (never coomit)
+.env
+.env.*
+!.env.example

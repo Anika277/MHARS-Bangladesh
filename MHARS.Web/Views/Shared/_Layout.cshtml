@@ -38,6 +38,105 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
     @await RenderSectionAsync("Styles", required: false)
+    <!-- MHARS AI Assistant -->
+<button id="mhars-agent-button"
+        class="btn btn-primary shadow"
+        style="position:fixed;right:20px;bottom:20px;z-index:2000;border-radius:50px;">
+    💬 MHARS AI
+</button>
+
+<div id="mhars-agent-panel"
+     style="display:none;position:fixed;right:20px;bottom:80px;width:360px;max-width:calc(100vw - 40px);height:460px;z-index:2000;background:#fff;border:1px solid #ccc;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);flex-direction:column;overflow:hidden;">
+    <div style="padding:10px 14px;background:#586369;color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center;">
+        MHARS Assistant
+        <button onclick="document.getElementById('mhars-agent-panel').style.display='none'"
+                style="background:none;border:none;color:#fff;font-size:1.2rem;">×</button>
+    </div>
+
+    <div id="mhars-agent-messages"
+         style="flex:1;overflow:auto;padding:12px;background:#f7f7f7;"></div>
+
+    <div style="display:flex;gap:8px;padding:10px;border-top:1px solid #ddd;background:#fff;">
+        <input id="mhars-agent-input"
+               class="form-control"
+               placeholder="Ask about alerts, shelters, safety..." />
+        <button id="mhars-agent-send" class="btn btn-primary">Send</button>
+    </div>
+</div>
+
+<script>
+    const mharsAgentHistory = [];
+
+    function mharsAddMessage(role, text) {
+        const box = document.getElementById('mhars-agent-messages');
+        const div = document.createElement('div');
+        div.style.marginBottom = '10px';
+        div.style.textAlign = role === 'user' ? 'right' : 'left';
+
+        const bubble = document.createElement('span');
+        bubble.textContent = text;
+        bubble.style.display = 'inline-block';
+        bubble.style.padding = '8px 11px';
+        bubble.style.borderRadius = '10px';
+        bubble.style.maxWidth = '85%';
+        bubble.style.whiteSpace = 'pre-wrap';
+        bubble.style.background = role === 'user' ? '#586369' : '#fff';
+        bubble.style.color = role === 'user' ? '#fff' : '#273036';
+        bubble.style.border = role === 'user' ? 'none' : '1px solid #ddd';
+
+        div.appendChild(bubble);
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    async function mharsSend() {
+        const input = document.getElementById('mhars-agent-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        input.value = '';
+        mharsAddMessage('user', text);
+        mharsAgentHistory.push({ role: 'user', content: text });
+
+        const district =
+            document.getElementById('districtSelect')?.value || null;
+
+        try {
+            const res = await fetch('/api/agent/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: text,
+                    district: district,
+                    history: mharsAgentHistory.slice(-6)
+                })
+            });
+
+            const data = await res.json();
+            const reply = data.reply || 'No response.';
+
+            mharsAddMessage('assistant', reply);
+            mharsAgentHistory.push({ role: 'assistant', content: reply });
+        } catch {
+            mharsAddMessage(
+                'assistant',
+                'Assistant unavailable. For emergencies call 999 or 1090.'
+            );
+        }
+    }
+
+    document.getElementById('mhars-agent-button').onclick = () => {
+        const p = document.getElementById('mhars-agent-panel');
+        p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
+    };
+
+    document.getElementById('mhars-agent-send').onclick = mharsSend;
+
+    document.getElementById('mhars-agent-input')
+        .addEventListener('keydown', e => {
+            if (e.key === 'Enter') mharsSend();
+        });
+</script>
 </head>
 <body>
     <!-- Keyboard users can jump past the header. Bootstrap's own utility, no extra CSS. -->
