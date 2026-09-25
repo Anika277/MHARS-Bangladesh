@@ -15,6 +15,13 @@ public enum SeverityLevel
     High = 3
 }
 
+public enum VerificationStatus
+{
+    Unverified = 0,
+    SourceReachable = 1,
+    Rejected = 2
+}
+
 public class Alert
 {
     public int Id { get; set; }
@@ -38,6 +45,17 @@ public class Alert
 
     [StringLength(200)]
     public string? SourceReference { get; set; }
+
+    [StringLength(500)]
+    [Url]
+    public string? SourceUrl { get; set; }
+
+    public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Unverified;
+
+    [StringLength(300)]
+    public string? VerificationNote { get; set; }
+
+    public DateTime? VerifiedAt { get; set; }
 
     public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
 

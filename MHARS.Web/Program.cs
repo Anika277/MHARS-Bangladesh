@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MHARS.Web.Data;
+using MHARS.Web.Models;
 using MHARS.Web.Models.Agent;
 using MHARS.Web.Services;
 
+<<<<<<< HEAD
 // Load .env if it exists (local dev only). The hosting server has none - that is expected.
 foreach (var candidate in new[]
 {
@@ -19,6 +21,9 @@ foreach (var candidate in new[]
         break;
     }
 }
+=======
+Env.Load(Path.Combine(AppContext.BaseDirectory, ".env"));
+>>>>>>> alertverify
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,16 +84,33 @@ builder.Services.AddScoped<UsgsEarthquakeService>();
 builder.Services.AddHostedService<UsgsSyncBackgroundService>();
 
 // ---------------------------------------------------------------------------
+//  Alert source verification (Level 1: government-domain allowlist)
+// ---------------------------------------------------------------------------
+builder.Services.Configure<AlertVerificationOptions>(
+    builder.Configuration.GetSection("AlertVerification"));
+
+builder.Services.AddHttpClient("alert-verification", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+
+builder.Services.AddScoped<IAlertVerificationService, AlertVerificationService>();
+
+// ---------------------------------------------------------------------------
 //  Groq AI agent
 // ---------------------------------------------------------------------------
 builder.Services.Configure<GroqOptions>(builder.Configuration.GetSection("Groq"));
+
 builder.Services.AddHttpClient<IGroqAgentService, GroqAgentService>();
 
 var app = builder.Build();
 
+
 // ---------------------------------------------------------------------------
 //  Apply migrations, then seed.
 // ---------------------------------------------------------------------------
+
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

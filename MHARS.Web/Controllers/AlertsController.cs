@@ -4,30 +4,30 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MHARS.Web.Data;
 using MHARS.Web.Models;
+using MHARS.Web.Services;
 using System.Security.Claims;
 using System.Text;
 
 namespace MHARS.Web.Controllers;
 
-
-public class AlertsController(ApplicationDbContext db) : Controller
+public class AlertsController(ApplicationDbContext db, IAlertVerificationService verifier) : Controller
 {
     public async Task<IActionResult> Index(string? district, HazardType? hazard)
-{
-    var query = db.Alerts.AsNoTracking().OrderByDescending(a => a.IssuedAt).AsQueryable();
+    {
+        var query = db.Alerts.AsNoTracking().OrderByDescending(a => a.IssuedAt).AsQueryable();
 
-    if (!string.IsNullOrEmpty(district) && district != "All")
-        query = query.Where(a => a.District == district);
+        if (!string.IsNullOrEmpty(district) && district != "All")
+            query = query.Where(a => a.District == district);
 
-    if (hazard.HasValue)
-        query = query.Where(a => a.HazardType == hazard.Value);
+        if (hazard.HasValue)
+            query = query.Where(a => a.HazardType == hazard.Value);
 
-    ViewBag.Districts = Districts.List;
-    ViewBag.SelectedDistrict = district ?? "All";
-    ViewBag.SelectedHazard = hazard;
+        ViewBag.Districts = Districts.List;
+        ViewBag.SelectedDistrict = district ?? "All";
+        ViewBag.SelectedHazard = hazard;
 
-    return View(await query.ToListAsync());
-}
+        return View(await query.ToListAsync());
+    }
 
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ExportCsv()
@@ -37,7 +37,7 @@ public class AlertsController(ApplicationDbContext db) : Controller
             .ToListAsync();
 
         var sb = new StringBuilder();
-        sb.AppendLine("Id,HazardType,District,Title,Severity,IssuedAt,IssuedBy,SourceReference");
+        sb.AppendLine("Id,HazardType,District,Title,Severity,IssuedAt,IssuedBy,SourceReference,SourceUrl,VerificationStatus,VerificationNote,VerifiedAt");
         foreach (var a in alerts)
         {
             sb.AppendLine(string.Join(",",
@@ -48,7 +48,11 @@ public class AlertsController(ApplicationDbContext db) : Controller
                 a.Severity,
                 a.IssuedAt.ToString("yyyy-MM-dd HH:mm"),
                 Escape(a.IssuedBy),
-                Escape(a.SourceReference)));
+                Escape(a.SourceReference),
+                Escape(a.SourceUrl),
+                a.VerificationStatus,
+                Escape(a.VerificationNote),
+                a.VerifiedAt?.ToString("yyyy-MM-dd HH:mm") ?? ""));
         }
 
         var bytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -84,7 +88,8 @@ public class AlertsController(ApplicationDbContext db) : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Create([Bind("HazardType,District,Title,Message,Severity,SourceReference")] Alert alert)
+    public async Task<IActionResult> Create(
+        [Bind("HazardType,District,Title,Message,Severity,SourceReference,SourceUrl")] Alert alert)
     {
         if (!ModelState.IsValid)
         {
@@ -94,8 +99,18 @@ public class AlertsController(ApplicationDbContext db) : Controller
                 "Value", "Text");
             return View(alert);
         }
+
+        // Level 1 verification: fetch the cited source URL and check its domain.
+        var result = await verifier.VerifySourceAsync(alert.SourceUrl);
+        alert.VerificationStatus = result.Status;
+        alert.VerificationNote = result.Note;
+        alert.VerifiedAt = result.Status == VerificationStatus.SourceReachable
+            ? DateTime.UtcNow
+            : null;
+
         alert.IssuedAt = DateTime.UtcNow;
         alert.IssuedBy = User.FindFirstValue(ClaimTypes.Email);
+
         db.Add(alert);
         await db.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
@@ -114,7 +129,8 @@ public class AlertsController(ApplicationDbContext db) : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,HazardType,District,Title,Message,Severity,SourceReference")] Alert alert)
+    public async Task<IActionResult> Edit(int id,
+        [Bind("Id,HazardType,District,Title,Message,Severity,SourceReference,SourceUrl")] Alert alert)
     {
         if (id != alert.Id) return NotFound();
         if (!ModelState.IsValid)
@@ -126,12 +142,29 @@ public class AlertsController(ApplicationDbContext db) : Controller
         {
             var existing = await db.Alerts.FindAsync(id);
             if (existing == null) return NotFound();
+
+            // Re-verify only if the source URL changed.
+            bool sourceChanged = !string.Equals(
+                existing.SourceUrl, alert.SourceUrl, StringComparison.OrdinalIgnoreCase);
+
             existing.HazardType = alert.HazardType;
             existing.District = alert.District;
             existing.Title = alert.Title;
             existing.Message = alert.Message;
             existing.Severity = alert.Severity;
             existing.SourceReference = alert.SourceReference;
+            existing.SourceUrl = alert.SourceUrl;
+
+            if (sourceChanged)
+            {
+                var result = await verifier.VerifySourceAsync(alert.SourceUrl);
+                existing.VerificationStatus = result.Status;
+                existing.VerificationNote = result.Note;
+                existing.VerifiedAt = result.Status == VerificationStatus.SourceReachable
+                    ? DateTime.UtcNow
+                    : null;
+            }
+
             await db.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException)
@@ -139,6 +172,25 @@ public class AlertsController(ApplicationDbContext db) : Controller
             if (!await db.Alerts.AnyAsync(a => a.Id == id)) return NotFound();
             throw;
         }
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Reverify(int id)
+    {
+        var alert = await db.Alerts.FindAsync(id);
+        if (alert == null) return NotFound();
+
+        var result = await verifier.VerifySourceAsync(alert.SourceUrl);
+        alert.VerificationStatus = result.Status;
+        alert.VerificationNote = result.Note;
+        alert.VerifiedAt = result.Status == VerificationStatus.SourceReachable
+            ? DateTime.UtcNow
+            : null;
+
+        await db.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
 

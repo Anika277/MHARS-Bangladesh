@@ -26,7 +26,7 @@
             @if (User.IsInRole("Admin"))
             {
                 <a class="btn btn-brand-action" asp-action="Create"><i class="bi bi-plus-circle me-1"></i> Issue New Alert</a>
-                 <a class="btn btn-outline-secondary" asp-action="ExportCsv"><i class="bi bi-download me-1"></i> Export CSV</a>
+                <a class="btn btn-outline-secondary" asp-action="ExportCsv"><i class="bi bi-download me-1"></i> Export CSV</a>
             }
         </div>
     </form>
@@ -37,7 +37,14 @@
         <table class="table table-hover align-middle">
             <thead>
                 <tr>
-                    <th>Hazard</th><th>District</th><th>Title</th><th>Severity</th><th>Issued (UTC)</th><th>By</th>@if (User.IsInRole("Admin")) { <th></th> }
+                    <th>Hazard</th>
+                    <th>District</th>
+                    <th>Title</th>
+                    <th>Source</th>
+                    <th>Severity</th>
+                    <th>Issued (UTC)</th>
+                    <th>By</th>
+                    @if (User.IsInRole("Admin")) { <th></th> }
                 </tr>
             </thead>
             <tbody data-reveal-group>
@@ -49,20 +56,55 @@
                         MHARS.Web.Models.SeverityLevel.Medium => "warning",
                         _ => "success"
                     };
+
                     <tr>
                         <td>@a.HazardType</td>
                         <td>@a.District</td>
                         <td class="fw-semibold"><a asp-action="Details" asp-route-id="@a.Id">@a.Title</a></td>
+                        <td class="text-nowrap">
+                            @if (a.VerificationStatus == MHARS.Web.Models.VerificationStatus.SourceReachable)
+                            {
+                                <span class="badge text-bg-success font-heading"
+                                      title="@a.VerificationNote">
+                                    <i class="bi bi-patch-check-fill"></i> Verified
+                                </span>
+                                @if (!string.IsNullOrWhiteSpace(a.SourceUrl))
+                                {
+                                    <a href="@a.SourceUrl" target="_blank" rel="noopener noreferrer"
+                                       class="ms-1 small" title="Open source">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+                                }
+                            }
+                            else if (a.VerificationStatus == MHARS.Web.Models.VerificationStatus.Rejected)
+                            {
+                                <span class="badge text-bg-danger font-heading"
+                                      title="@a.VerificationNote">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Unverified
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary font-heading"
+                                      title="No source URL supplied.">
+                                    <i class="bi bi-question-circle-fill"></i> No source
+                                </span>
+                            }
+                        </td>
                         <td><span class="badge text-bg-@badge font-heading">@a.Severity</span></td>
                         <td>@a.IssuedAt.ToString("dd MMM yyyy hh:mm")</td>
                         <td>@a.IssuedBy</td>
-
-                        @* only admins get edit/delete buttons, everyone else just views *@
 
                         @if (User.IsInRole("Admin"))
                         {
                             <td class="text-nowrap">
                                 <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@a.Id">Edit</a>
+                                <form asp-action="Reverify" asp-route-id="@a.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Re-check source">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                    </button>
+                                </form>
                                 <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@a.Id">Delete</a>
                             </td>
                         }
