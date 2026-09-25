@@ -42,8 +42,6 @@ public class GroqAgentService : IGroqAgentService
 
         try
         {
-          var alertsQuery = _db.Alerts.AsQueryable();
-var sheltersQuery = _db.Shelters.AsQueryable();
             var context = await BuildContextAsync(district, ct);
             var systemPrompt = BuildSystemPrompt(context);
 
@@ -68,7 +66,7 @@ var sheltersQuery = _db.Shelters.AsQueryable();
                 model = _opt.Model,
                 messages,
                 temperature = _opt.Temperature,
-                max_tokens = _opt.MaxTokens
+                max_completion_tokens = _opt.MaxTokens
             };
 
             using var req = new HttpRequestMessage(
@@ -109,7 +107,7 @@ var sheltersQuery = _db.Shelters.AsQueryable();
         }
     }
 
-       private async Task<string> BuildContextAsync(string? district, CancellationToken ct)
+    private async Task<string> BuildContextAsync(string? district, CancellationToken ct)
     {
         var alertsQuery = _db.Alerts.AsQueryable();
         var sheltersQuery = _db.Shelters.AsQueryable();
