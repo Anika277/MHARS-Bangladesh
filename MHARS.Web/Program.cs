@@ -6,8 +6,19 @@ using MHARS.Web.Data;
 using MHARS.Web.Models.Agent;
 using MHARS.Web.Services;
 
-// Load .env BEFORE CreateBuilder so builder.Configuration sees the values.
-Env.Load();
+// Load .env if it exists (local dev only). The hosting server has none - that is expected.
+foreach (var candidate in new[]
+{
+    Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+    Path.Combine(AppContext.BaseDirectory, ".env")
+})
+{
+    if (File.Exists(candidate))
+    {
+        Env.Load(candidate);
+        break;
+    }
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -75,27 +86,37 @@ builder.Services.AddHttpClient<IGroqAgentService, GroqAgentService>();
 
 var app = builder.Build();
 
-// Apply migrations, then seed.
+// ---------------------------------------------------------------------------
+//  Apply migrations, then seed.
+// ---------------------------------------------------------------------------
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var logger = services.GetRequiredService<ILogger<Program>>();
+    var db = services.GetRequiredService<ApplicationDbContext>();
+
+    logger.LogInformation("EF provider  : {Provider}", db.Database.ProviderName);
+    logger.LogInformation("Database     : {Database}", db.Database.GetDbConnection().Database);
+
     try
     {
-        var db = services.GetRequiredService<ApplicationDbContext>();
-
-        logger.LogInformation("EF provider  : {Provider}", db.Database.ProviderName);
-        logger.LogInformation("Database     : {Database}", db.Database.GetDbConnection().Database);
-
         await db.Database.MigrateAsync();
-        await DbSeeder.SeedAsync(services);
-
-        logger.LogInformation("Database ready and seeded.");
+        logger.LogInformation("Migrations applied.");
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "DATABASE MIGRATION OR SEEDING FAILED.");
+        logger.LogError(ex, "MIGRATION FAILED.");
         throw;
+    }
+
+    try
+    {
+        await DbSeeder.SeedAsync(services);
+        logger.LogInformation("Seeding complete.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "SEEDING FAILED - site will still run but data may be empty.");
     }
 }
 
