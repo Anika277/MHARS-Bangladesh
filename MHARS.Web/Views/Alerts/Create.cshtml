@@ -36,6 +36,16 @@
                     <label asp-for="SourceReference" class="form-label">Source Reference (e.g., BMD/FFWC bulletin no.)</label>
                     <input asp-for="SourceReference" class="form-control" />
                 </div>
+                <div class="mb-3">
+                    <label asp-for="SourceUrl" class="form-label">Government Source URL</label>
+                    <input asp-for="SourceUrl" class="form-control"
+                           placeholder="https://ffwc.gov.bd/..." />
+                    <span asp-validation-for="SourceUrl" class="text-danger"></span>
+                    <div class="form-text">
+                        Paste the exact URL of the official bulletin. MHARS will confirm
+                        the domain is a known government source (FFWC, BMD, BWDB, DDM).
+                    </div>
+                </div>
                 <button type="submit" class="btn btn-brand-action"><i class="bi bi-broadcast me-1"></i> Issue Alert</button>
                 <a class="btn btn-secondary" asp-action="Index">Cancel</a>
             </form>
