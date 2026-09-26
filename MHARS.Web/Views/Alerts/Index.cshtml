@@ -3,9 +3,34 @@
     ViewData["Title"] = "All Alerts";
     var selectedDistrict = ViewBag.SelectedDistrict as string ?? "All";
     var selectedHazard = ViewBag.SelectedHazard as MHARS.Web.Models.HazardType?;
+    var confirmedHighFlood = ViewBag.ConfirmedHighFloodDistricts as List<string> ?? new List<string>();
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/alert-safety.css" asp-append-version="true" />
 }
 <div class="page-title" data-reveal>All Hazard Alerts</div>
 <p class="page-subtitle">District-wise flood and earthquake alerts issued by the authority.</p>
+
+@if (confirmedHighFlood.Count > 0)
+{
+    <div class="flood-banner" role="alert" data-reveal>
+        <i class="bi bi-exclamation-octagon-fill"></i>
+        <div>
+            <div class="flood-banner-title">Confirmed high flood risk: @string.Join(", ", confirmedHighFlood)</div>
+            <div>Please stay safe. If water is rising around you, move to your nearest shelter now and keep your go-bag ready.</div>
+            <div lang="bn" class="flood-banner-bn">নিরাপদে থাকুন — প্রয়োজনে নিকটস্থ আশ্রয়কেন্দ্রে যান। জরুরি প্রয়োজনে ৯৯৯ নম্বরে কল করুন।</div>
+            <a class="btn btn-sm btn-light mt-2" asp-controller="Shelters" asp-action="Index"><i class="bi bi-house-door-fill me-1"></i> Find a shelter</a>
+        </div>
+    </div>
+}
+
+@if (TempData["VerifyMessage"] is string verifyMessage)
+{
+    <div class="alert alert-info alert-dismissible fade show" role="status">
+        <i class="bi bi-arrow-repeat me-1"></i> @verifyMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <div class="disaster-panel" data-reveal>
     <form method="get" class="row g-2 align-items-end">
@@ -62,34 +87,7 @@
                         <td>@a.District</td>
                         <td class="fw-semibold"><a asp-action="Details" asp-route-id="@a.Id">@a.Title</a></td>
                         <td class="text-nowrap">
-                            @if (a.VerificationStatus == MHARS.Web.Models.VerificationStatus.SourceReachable)
-                            {
-                                <span class="badge text-bg-success font-heading"
-                                      title="@a.VerificationNote">
-                                    <i class="bi bi-patch-check-fill"></i> Verified
-                                </span>
-                                @if (!string.IsNullOrWhiteSpace(a.SourceUrl))
-                                {
-                                    <a href="@a.SourceUrl" target="_blank" rel="noopener noreferrer"
-                                       class="ms-1 small" title="Open source">
-                                        <i class="bi bi-box-arrow-up-right"></i>
-                                    </a>
-                                }
-                            }
-                            else if (a.VerificationStatus == MHARS.Web.Models.VerificationStatus.Rejected)
-                            {
-                                <span class="badge text-bg-danger font-heading"
-                                      title="@a.VerificationNote">
-                                    <i class="bi bi-exclamation-triangle-fill"></i> Unverified
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="badge text-bg-secondary font-heading"
-                                      title="No source URL supplied.">
-                                    <i class="bi bi-question-circle-fill"></i> No source
-                                </span>
-                            }
+                            <partial name="~/Views/Alerts/_VerificationBadge.cshtml" model="a" />
                         </td>
                         <td><span class="badge text-bg-@badge font-heading">@a.Severity</span></td>
                         <td>@a.IssuedAt.ToString("dd MMM yyyy hh:mm")</td>

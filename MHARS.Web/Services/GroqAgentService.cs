@@ -211,6 +211,7 @@ RULES:
 
 VERIFICATION RULES:
 - If asked whether an alert is verified, report the Verification field exactly.
+- Verified means MHARS confirmed the cited page is on an official agency domain, is live, AND mentions the alert's district. It does NOT mean MHARS measured water levels itself.
 - SourceReachable means MHARS confirmed the cited government URL is reachable on a known government domain. It does NOT mean MHARS independently validated the alert content. Say so honestly.
 - Rejected means the cited URL failed (dead link, wrong domain, or non-HTTPS). Report the VerificationNote.
 - Unverified means no source URL was supplied.

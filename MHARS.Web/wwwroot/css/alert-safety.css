@@ -1,0 +1,73 @@
+/* ==========================================================================
+   MHARS – alert verification + safety (awareness) panels
+   Colours are explicit so the panels read well in BOTH light and dark theme.
+   ========================================================================== */
+
+/* ---------- Red banner on the Alerts list ---------- */
+.flood-banner {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: linear-gradient(135deg, #B3261E, #DA291C);
+    color: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 18px;
+    box-shadow: 0 6px 20px rgba(218, 41, 28, .35);
+}
+.flood-banner > .bi { font-size: 2rem; line-height: 1; }
+.flood-banner-title { font-family: var(--font-display, sans-serif); font-weight: 700; font-size: 1.15rem; }
+.flood-banner-bn { font-family: var(--font-brand, sans-serif); opacity: .95; margin-top: 2px; }
+
+/* ---------- Verification panel (alert details) ---------- */
+.verify-panel { border-left: 6px solid #6C757D; }
+.verify-panel.verify-ok       { border-left-color: #198754; }
+.verify-panel.verify-official { border-left-color: #0AA2C0; }
+.verify-panel.verify-fail     { border-left-color: #DC3545; }
+.verify-head { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+.verify-head > .bi { font-size: 2rem; line-height: 1; }
+.verify-ok .verify-head > .bi       { color: #198754; }
+.verify-official .verify-head > .bi { color: #0AA2C0; }
+.verify-fail .verify-head > .bi     { color: #DC3545; }
+.verify-none .verify-head > .bi     { color: #6C757D; }
+.verify-title { font-family: var(--font-display, sans-serif); font-weight: 700; font-size: 1.2rem; }
+.verify-checks { list-style: none; padding: 0; margin: 0 0 12px; }
+.verify-checks li { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; }
+.verify-checks li.ok   .bi { color: #198754; }
+.verify-checks li.fail .bi { color: #DC3545; }
+.verify-checks li.na   .bi { color: #8A8F94; }
+.verify-checks li.info .bi { color: #0AA2C0; }
+.verify-foot { font-size: .8rem; opacity: .75; margin-top: 10px; }
+
+/* ---------- Safety / awareness panel ---------- */
+.safety-panel {
+    border-radius: 14px; padding: 20px 22px; margin-bottom: 20px;
+    background: #FFFFFF; color: #1A2E24;
+    border: 1px solid #E3ECE8; border-top: 8px solid #2E7D4F;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .10);
+}
+.safety-panel.safety-high   { border-top-color: #DA291C; }
+.safety-panel.safety-medium { border-top-color: #E07B00; }
+.safety-panel.safety-low    { border-top-color: #2E7D4F; }
+
+.safety-head { display: flex; gap: 14px; align-items: flex-start; }
+.safety-head > .bi { font-size: 2.2rem; line-height: 1; }
+.safety-high   .safety-head > .bi { color: #DA291C; }
+.safety-medium .safety-head > .bi { color: #E07B00; }
+.safety-low    .safety-head > .bi { color: #2E7D4F; }
+.safety-title { font-family: var(--font-display, sans-serif); font-weight: 700; font-size: 1.25rem; color: #0D1F18; }
+.safety-bangla { font-family: var(--font-brand, sans-serif); font-size: 1.05rem; color: #004D38; margin-top: 4px; }
+.safety-sub { font-size: .85rem; color: #6B3B00; background: #FFF7EC; border-radius: 6px; padding: 6px 10px; margin-top: 8px; }
+
+.safety-h6 { font-family: var(--font-display, sans-serif); font-weight: 700; color: #004D38; margin-bottom: 8px; }
+.safety-actions { padding-left: 1.2rem; margin: 0; }
+.safety-actions li { margin-bottom: 6px; color: #1A2E24; }
+
+.shelter-list { list-style: none; padding: 0; margin: 0 0 10px; }
+.shelter-list li { padding: 8px 10px; border: 1px solid #E3ECE8; border-radius: 8px; margin-bottom: 6px; background: #F4F7F5; color: #1A2E24; }
+.shelter-list a { color: #006A4E; }
+
+.hotlines { display: flex; gap: 8px; flex-wrap: wrap; }
+.hotlines a {
+    display: flex; flex-direction: column; align-items: center; min-width: 88px;
+    padding: 6px 10px; border-radius: 8px; text-decoration: none;
+    background: #FDECEA; color: #8C1D18; border: 1px solid #F5C2BD;
+}
+.hotlines a strong { font-size: 1.25rem; line-height: 1.1; }
+.hotlines a span { font-size: .72rem; }
+.safety-panel a.small { color: #006A4E; }

@@ -43,7 +43,8 @@
                            placeholder="https://ffwc.gov.bd/..." />
                     <span asp-validation-for="SourceUrl" class="text-danger"></span>
                     <div class="form-text">
-                        Paste the exact URL of the official bulletin. Changing this field triggers re-verification.
+                        Paste the exact URL of the official bulletin. Changing this link or the district triggers re-verification.
+                        Best result: a page that names the district (MHARS checks for it, in English or Bangla).
                     </div>
                 </div>
 
@@ -52,18 +53,7 @@
                     <div class="mb-3">
                         <label class="form-label">Current verification</label>
                         <div>
-                            @if (Model.VerificationStatus == MHARS.Web.Models.VerificationStatus.SourceReachable)
-                            {
-                                <span class="badge text-bg-success">
-                                    <i class="bi bi-patch-check-fill"></i> Government source verified
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="badge text-bg-danger">
-                                    <i class="bi bi-exclamation-triangle-fill"></i> Source could not be verified
-                                </span>
-                            }
+                            <partial name="~/Views/Alerts/_VerificationBadge.cshtml" model="Model" />
                             <div class="form-text">@Model.VerificationNote</div>
                         </div>
                     </div>

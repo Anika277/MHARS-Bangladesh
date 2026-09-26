@@ -1,0 +1,144 @@
+@model MHARS.Web.Models.Alert
+@using MHARS.Web.Models
+@*
+    Awareness message shown under every alert. Wording depends on hazard, severity
+    and whether an official source confirmed the alert. It NEVER tells people to
+    ignore a warning: unconfirmed alerts still get "stay alert" advice.
+    Shelters come from ViewBag.Shelters (same district, loaded in AlertsController.Details).
+*@
+@{
+    var confirmed = Model.VerificationStatus is VerificationStatus.Verified or VerificationStatus.SourceReachable;
+    var shelters = ViewBag.Shelters as List<Shelter> ?? new List<Shelter>();
+    var isFlood = Model.HazardType == HazardType.Flood;
+
+    var tone = Model.Severity switch
+    {
+        SeverityLevel.High => "high",
+        SeverityLevel.Medium => "medium",
+        _ => "low"
+    };
+
+    string heading;
+    string bangla;
+    string[] actions;
+
+    if (isFlood)
+    {
+        heading = confirmed
+            ? Model.Severity switch
+            {
+                SeverityLevel.High => $"Flood warning confirmed for {Model.District} — please stay safe and move to a shelter if water rises",
+                SeverityLevel.Medium => $"Flood warning confirmed for {Model.District} — please get prepared now",
+                _ => $"Flood watch confirmed for {Model.District} — please stay alert"
+            }
+            : $"Flood warning issued for {Model.District} — stay alert and follow official updates";
+
+        bangla = Model.Severity switch
+        {
+            SeverityLevel.High => "নিরাপদে থাকুন। পানি বাড়তে থাকলে দেরি না করে নিকটস্থ আশ্রয়কেন্দ্রে চলে যান।",
+            SeverityLevel.Medium => "প্রস্তুত থাকুন। জরুরি জিনিসপত্র গুছিয়ে রাখুন এবং নিকটস্থ আশ্রয়কেন্দ্র চিনে রাখুন।",
+            _ => "সতর্ক থাকুন এবং বন্যা পূর্বাভাস কেন্দ্রের (FFWC) হালনাগাদ তথ্য অনুসরণ করুন।"
+        };
+
+        actions = Model.Severity switch
+        {
+            SeverityLevel.High =>
+            [
+                "Move to your nearest shelter now if water is entering your area — do not wait for it to rise further.",
+                "Take a go-bag: drinking water, dry food, medicines, important papers in a plastic bag, phone and power bank, torch.",
+                "Switch off electricity and gas before you leave. Never touch wires or switches while standing in water.",
+                "Do not walk, swim or drive through flood water — even knee-deep moving water can knock a person down.",
+                "Keep children, elderly and disabled family members with you, and check on your neighbours."
+            ],
+            SeverityLevel.Medium =>
+            [
+                "Pack a go-bag now: drinking water, dry food, medicines, documents in a plastic bag, phone charger, torch.",
+                "Move valuables, grain and livestock to higher ground.",
+                "Find your nearest shelter (see the list on this page) and plan a safe route to it.",
+                "Keep your phone charged and follow FFWC / BMD updates on radio, TV or 1090."
+            ],
+            _ =>
+            [
+                "Follow FFWC / BMD updates and watch local water levels.",
+                "Know where your nearest shelter is (see the list on this page).",
+                "Keep drinking water safe — use tube-well water or boil it."
+            ]
+        };
+    }
+    else
+    {
+        heading = $"Earthquake alert for {Model.District} — know what to do";
+        bangla = "ভূমিকম্পের সময়: বসে পড়ুন, মাথা ঢাকুন, শক্ত কিছু ধরে থাকুন। কম্পন থামলে খোলা জায়গায় যান।";
+        actions =
+        [
+            "Drop, Cover and Hold On: get under a sturdy table and protect your head and neck.",
+            "Stay away from windows, glass and tall furniture. Do not use lifts or run down stairs while shaking.",
+            "When the shaking stops, move calmly to an open space away from buildings and power lines.",
+            "Expect aftershocks. Check for gas leaks and injuries before going back inside."
+        ];
+    }
+}
+
+<div class="safety-panel safety-@tone @(confirmed ? "" : "safety-unconfirmed")" data-reveal>
+    <div class="safety-head">
+        <i class="bi @(isFlood ? "bi-life-preserver" : "bi-shield-exclamation")"></i>
+        <div>
+            <div class="safety-title">@heading</div>
+            <div class="safety-bangla" lang="bn">@bangla</div>
+            @if (!confirmed && isFlood)
+            {
+                <div class="safety-sub">This alert is not yet confirmed by an official source. Please still take care and check FFWC (ffwc.gov.bd) or BMD for updates.</div>
+            }
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-lg-7">
+            <h6 class="safety-h6"><i class="bi bi-list-check me-1"></i> What to do now</h6>
+            <ol class="safety-actions">
+                @foreach (var a in actions)
+                {
+                    <li>@a</li>
+                }
+            </ol>
+        </div>
+
+        <div class="col-lg-5">
+            <h6 class="safety-h6"><i class="bi bi-house-heart-fill me-1"></i> Shelters in @Model.District</h6>
+            @if (shelters.Count == 0)
+            {
+                <p class="small mb-2">No shelter is listed for @Model.District yet. Call <strong>999</strong> or contact your local Union Parishad / Upazila office.</p>
+            }
+            else
+            {
+                <ul class="shelter-list">
+                    @foreach (var s in shelters)
+                    {
+                        <li>
+                            <div class="fw-semibold">@s.Name</div>
+                            <div class="small">@s.Address · capacity @s.Capacity.ToString("N0")</div>
+                            @if (!string.IsNullOrWhiteSpace(s.ContactNumber))
+                            {
+                                <a class="small" href="tel:@s.ContactNumber"><i class="bi bi-telephone-fill"></i> @s.ContactNumber</a>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+            <a class="btn btn-sm btn-brand-action" asp-controller="Shelters" asp-action="Index" asp-route-district="@Model.District">
+                <i class="bi bi-geo-alt-fill me-1"></i> All shelters in @Model.District
+            </a>
+
+            <h6 class="safety-h6 mt-3"><i class="bi bi-telephone-outbound-fill me-1"></i> Emergency numbers</h6>
+            <div class="hotlines">
+                <a href="tel:999"><strong>999</strong><span>Emergency</span></a>
+                <a href="tel:1090"><strong>1090</strong><span>Disaster warning</span></a>
+                <a href="tel:333"><strong>333</strong><span>Govt. help</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a asp-controller="Guidelines" asp-action="Index" class="small fw-semibold"><i class="bi bi-shield-check me-1"></i> Full safety guidance</a>
+    </div>
+</div>

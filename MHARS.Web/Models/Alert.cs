@@ -17,9 +17,11 @@ public enum SeverityLevel
 
 public enum VerificationStatus
 {
-    Unverified = 0,
-    SourceReachable = 1,
-    Rejected = 2
+    Unverified = 0,       // no official source link
+    SourceReachable = 1,  // official source is live, but could not be matched to the district ("Official source")
+    Rejected = 2,         // link failed: not official, dead, or not https
+    Verified = 3          // official source is live AND mentions this district (strongest)
+    // Stored as int, so adding "Verified = 3" needs NO database migration.
 }
 
 public class Alert
