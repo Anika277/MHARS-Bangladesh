@@ -1,0 +1,104 @@
+@model MHARS.Web.Models.ViewModels.DonationTrackerViewModel
+@using MHARS.Web.Helpers
+@{
+    ViewData["Title"] = "Relief Fund";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/donations.css" asp-append-version="true" />
+}
+
+<div class="page-title" data-reveal><i class="bi bi-heart-fill me-1"></i> Relief Fund</div>
+<p class="page-subtitle">Support people affected by floods and earthquakes. Every confirmed donation is counted below.</p>
+
+@if (Model.ShowTestNotice)
+{
+    <div class="sandbox-banner mb-3" data-reveal>
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+        Test mode — payments run on the SSLCommerz sandbox. No real money is charged or collected.
+    </div>
+}
+
+@if (User.IsInRole("Admin"))
+{
+    <div class="mb-3">
+        <a class="btn btn-success" asp-action="CreateCampaign"><i class="bi bi-plus-circle me-1"></i> New Campaign</a>
+        <a class="btn btn-outline-secondary" asp-action="Manage"><i class="bi bi-list-check me-1"></i> All Transactions</a>
+    </div>
+}
+
+<!-- Totals -->
+<div class="row g-3 mb-4" data-reveal-group>
+    <div class="col-md-4"><div class="fund-stat"><div class="label">Total raised</div><div class="value">@DonationDisplay.Taka(Model.TotalRaised)</div></div></div>
+    <div class="col-md-4"><div class="fund-stat"><div class="label">Confirmed donations</div><div class="value">@Model.TotalDonations.ToString("N0")</div></div></div>
+    <div class="col-md-4"><div class="fund-stat"><div class="label">Active campaigns</div><div class="value">@Model.ActiveCampaigns</div></div></div>
+</div>
+
+<!-- Campaigns -->
+@if (!Model.Campaigns.Any())
+{
+    <div class="alert alert-info">No relief campaigns yet.</div>
+}
+else
+{
+    <div class="row g-3 mb-4" data-reveal-group>
+        @foreach (var p in Model.Campaigns)
+        {
+            var c = p.Campaign;
+            <div class="col-md-6 col-lg-4">
+                <div class="campaign-card @(c.IsActive ? "" : "closed")">
+                    <h3>@c.Title</h3>
+                    <div class="meta">
+                        @if (c.HazardType is not null) { <span class="badge bg-secondary me-1">@c.HazardType</span> }
+                        <i class="bi bi-geo-alt"></i> @(c.District ?? "Nationwide")
+                        @if (!c.IsActive) { <span class="badge bg-dark ms-1">Closed</span> }
+                    </div>
+                    <p class="desc">@c.Description</p>
+
+                    <div class="progress fund-progress" role="progressbar" aria-label="Progress toward goal"
+                         aria-valuenow="@p.PercentOfGoal" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar" style="width: @(p.PercentOfGoal)%"></div>
+                    </div>
+                    <div class="fund-numbers">
+                        <span><strong>@DonationDisplay.Taka(p.Raised)</strong> of @DonationDisplay.Taka(c.GoalAmount)</span>
+                        <span>@p.PercentOfGoal% · @p.DonorCount donors</span>
+                    </div>
+
+                    @if (c.IsActive)
+                    {
+                        <a class="btn btn-brand-action w-100 mt-3" asp-action="Donate" asp-route-id="@c.Id">
+                            <i class="bi bi-heart me-1"></i> Donate
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Recent donations -->
+<div class="disaster-panel" data-reveal>
+    <h5 class="mb-3"><i class="bi bi-clock-history me-1"></i> Recent confirmed donations</h5>
+    @if (!Model.Recent.Any())
+    {
+        <p class="text-muted mb-0">No confirmed donations yet — be the first.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>Donor</th><th>Campaign</th><th class="text-end">Amount</th><th>Time</th></tr></thead>
+                <tbody>
+                    @foreach (var r in Model.Recent)
+                    {
+                        <tr>
+                            <td>@r.DisplayName</td>
+                            <td>@r.CampaignTitle</td>
+                            <td class="text-end fw-bold">@DonationDisplay.Taka(r.Amount)</td>
+                            <td class="text-muted small">@DonationDisplay.BdTime(r.PaidAtUtc)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

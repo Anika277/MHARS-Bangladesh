@@ -1,0 +1,58 @@
+@model MHARS.Web.Models.Donation
+@using MHARS.Web.Helpers
+@{
+    ViewData["Title"] = "Donation Receipt " + Model.ReceiptNumber;
+    var showTestNotice = ViewBag.ShowTestNotice as bool? ?? false;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/donations.css" asp-append-version="true" />
+}
+
+<div class="no-print d-flex flex-wrap gap-2 justify-content-center my-3">
+    <div class="alert alert-success mb-0 py-2"><i class="bi bi-check-circle-fill me-1"></i> Thank you! Your donation is confirmed.</div>
+</div>
+
+<div class="receipt-card" id="receipt">
+    @if (showTestNotice) { <div class="demo-watermark">TEST</div> }
+
+    <div class="receipt-head">
+        <div class="org">
+            MHARS Relief Fund
+            <small>Multi-Hazard Alert &amp; Community Response System</small>
+        </div>
+        <div class="text-end">
+            <div class="paid-stamp">PAID</div>
+            <div class="small text-muted mt-2">Receipt No.</div>
+            <div class="fw-bold">@Model.ReceiptNumber</div>
+        </div>
+    </div>
+
+    <table class="table table-borderless table-sm mb-3">
+        <tbody>
+            <tr><th>Donor</th><td>@Model.DonorName</td></tr>
+            <tr><th>Email</th><td>@Model.DonorEmail</td></tr>
+            <tr><th>Campaign</th><td>@Model.Campaign?.Title</td></tr>
+            <tr><th>Date &amp; time</th><td>@DonationDisplay.BdTime(Model.PaidAtUtc ?? Model.CreatedAtUtc)</td></tr>
+            <tr><th>Payment method</th><td>@(Model.CardType ?? "—")</td></tr>
+            <tr><th>Transaction ID</th><td><code>@Model.TranId</code></td></tr>
+            <tr><th>Bank transaction ID</th><td><code>@(Model.BankTranId ?? "—")</code></td></tr>
+            <tr><th>Gateway validation ID</th><td><code>@(Model.ValId ?? "—")</code></td></tr>
+            <tr class="amount-row"><th>Amount</th><td>@DonationDisplay.Taka(Model.Amount, withDecimals: true) @Model.Currency</td></tr>
+        </tbody>
+    </table>
+
+    <p class="receipt-note mb-0">
+        Payment processed securely by SSLCommerz and verified by MHARS.
+        Thank you for supporting disaster relief in Bangladesh.
+        @if (showTestNotice)
+        {
+            <br /><strong>Test-mode receipt: no real money was transferred.</strong>
+        }
+    </p>
+</div>
+
+<div class="no-print text-center my-4">
+    <button type="button" class="btn btn-brand-action" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print / Save as PDF</button>
+    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Back to Relief Fund</a>
+    <p class="small text-muted mt-2">Bookmark this page — its link is your receipt.</p>
+</div>

@@ -10,6 +10,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Shelter> Shelters => Set<Shelter>();
     public DbSet<SafetyGuideline> SafetyGuidelines => Set<SafetyGuideline>();
     public DbSet<EarthquakeEvent> EarthquakeEvents => Set<EarthquakeEvent>();
+    public DbSet<DonationCampaign> DonationCampaigns => Set<DonationCampaign>();
+    public DbSet<Donation> Donations => Set<Donation>();
 
     // ONE OnModelCreating only. C# allows no second method with the same signature,
     // and even if it did, EF calls this exactly once — a second copy would silently
@@ -36,6 +38,32 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             // alphabetically — 'Asia' < 'Bangladesh' < 'Global' < 'Regional' — and the
             // Bangladesh tab would quietly start showing Asian earthquakes.
             e.Property(x => x.Scope).HasConversion<int>();
+        });
+
+        // ---------- Relief Fund ----------
+        builder.Entity<DonationCampaign>(e =>
+        {
+            e.Property(x => x.GoalAmount).HasPrecision(18, 2);   // money: never float/double
+            e.Property(x => x.HazardType).HasConversion<string>();
+        });
+
+        builder.Entity<Donation>(e =>
+        {
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.Property(x => x.Status).HasConversion<string>();   // readable in SSMS: 'Paid', 'Pending'...
+
+            e.HasIndex(x => x.TranId).IsUnique();                // one row per gateway transaction
+            e.HasIndex(x => x.ReceiptToken).IsUnique();          // receipt lookup
+            e.HasIndex(x => new { x.Status, x.CampaignId });     // tracker: WHERE Status='Paid' GROUP BY CampaignId
+
+            e.Ignore(x => x.ReceiptNumber);                      // computed in C#, not a column
+
+            // Real FK (unlike Alert/Shelter's District text match): a donation must belong to
+            // an existing campaign. Restrict = a campaign with donations can't be deleted by accident.
+            e.HasOne(x => x.Campaign)
+             .WithMany(c => c.Donations)
+             .HasForeignKey(x => x.CampaignId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
     }
 
