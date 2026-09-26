@@ -66,7 +66,7 @@ public class GroqAgentService : IGroqAgentService
                 model = _opt.Model,
                 messages,
                 temperature = _opt.Temperature,
-                max_tokens = _opt.MaxTokens
+                max_completion_tokens = _opt.MaxTokens
             };
 
             using var req = new HttpRequestMessage(

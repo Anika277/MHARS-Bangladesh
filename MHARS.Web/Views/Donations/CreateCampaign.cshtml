@@ -1,0 +1,55 @@
+@model MHARS.Web.Models.DonationCampaign
+@{
+    ViewData["Title"] = "New Relief Campaign";
+}
+
+<div class="page-title" data-reveal><i class="bi bi-plus-circle me-1"></i> New Relief Campaign</div>
+<p class="page-subtitle">Open a fund for a specific disaster. Leave District empty for a nationwide campaign.</p>
+
+<div class="disaster-panel" style="max-width: 720px;">
+    <form asp-action="CreateCampaign" method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" placeholder="e.g. Sylhet Flood Relief 2026" />
+            <span asp-validation-for="Title" class="text-danger small"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="4" placeholder="What the money is for, who it helps."></textarea>
+            <span asp-validation-for="Description" class="text-danger small"></span>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label asp-for="HazardType" class="form-label">Hazard</label>
+                <select asp-for="HazardType" class="form-select" asp-items="Html.GetEnumSelectList<MHARS.Web.Models.HazardType>()">
+                    <option value="">General</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="District" class="form-label"></label>
+                <select asp-for="District" class="form-select" asp-items="@(new SelectList(MHARS.Web.Models.Districts.List))">
+                    <option value="">Nationwide</option>
+                </select>
+                <span asp-validation-for="District" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="GoalAmount" class="form-label"></label>
+                <input asp-for="GoalAmount" class="form-control" type="number" min="1000" step="1000" />
+                <span asp-validation-for="GoalAmount" class="text-danger small"></span>
+            </div>
+        </div>
+        <div class="form-check mb-4">
+            <input asp-for="IsActive" class="form-check-input" />
+            <label asp-for="IsActive" class="form-check-label"></label>
+        </div>
+
+        <button type="submit" class="btn btn-success"><i class="bi bi-check2 me-1"></i> Create campaign</button>
+        <a asp-action="Manage" class="btn btn-outline-secondary ms-2">Cancel</a>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

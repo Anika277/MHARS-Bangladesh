@@ -15,3 +15,7 @@ appsettings.Development.json
 .env
 .env.*
 !.env.example
+appsettings.Production.json
+**/Properties/PublishProfiles/
+*.pubxml
+*.pubxml.user

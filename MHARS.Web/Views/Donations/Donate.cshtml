@@ -1,0 +1,83 @@
+@model MHARS.Web.Models.ViewModels.DonateViewModel
+@{
+    ViewData["Title"] = "Donate";
+    var showTestNotice = ViewBag.ShowTestNotice as bool? ?? false;
+    int[] presets = [100, 500, 1000, 5000];
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/donations.css" asp-append-version="true" />
+}
+
+<div class="page-title" data-reveal><i class="bi bi-heart-fill me-1"></i> Donate</div>
+<p class="page-subtitle">Campaign: <strong>@Model.CampaignTitle</strong></p>
+
+@if (showTestNotice)
+{
+    <div class="sandbox-banner mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+        Test mode (SSLCommerz sandbox). Test card <code>4111 1111 1111 1111</code>, expiry <code>12/26</code>, CVV <code>111</code>. No real money moves.
+    </div>
+}
+
+<div class="disaster-panel" style="max-width: 640px;" data-reveal>
+    <form asp-action="Donate" method="post" novalidate>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        <input type="hidden" asp-for="CampaignId" />
+
+        <label class="form-label fw-bold">Choose an amount</label>
+        <div class="d-flex flex-wrap gap-2 mb-2 amount-chips">
+            @foreach (var a in presets)
+            {
+                <button type="button" class="btn btn-outline-success" onclick="document.getElementById('Amount').value=@a">৳@a</button>
+            }
+        </div>
+        <div class="mb-3">
+            <label asp-for="Amount" class="form-label"></label>
+            <div class="input-group">
+                <span class="input-group-text">৳</span>
+                <input asp-for="Amount" class="form-control" type="number" min="10" max="500000" step="1" />
+            </div>
+            <span asp-validation-for="Amount" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="DonorName" class="form-label"></label>
+            <input asp-for="DonorName" class="form-control" autocomplete="name" />
+            <span asp-validation-for="DonorName" class="text-danger small"></span>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="DonorEmail" class="form-label"></label>
+                <input asp-for="DonorEmail" class="form-control" autocomplete="email" />
+                <span asp-validation-for="DonorEmail" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="DonorPhone" class="form-label"></label>
+                <input asp-for="DonorPhone" class="form-control" autocomplete="tel" placeholder="01XXXXXXXXX" />
+                <span asp-validation-for="DonorPhone" class="text-danger small"></span>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label asp-for="City" class="form-label"></label>
+            <select asp-for="City" class="form-select" asp-items="@(new SelectList(MHARS.Web.Models.Districts.List))"></select>
+            <span asp-validation-for="City" class="text-danger small"></span>
+        </div>
+        <div class="form-check mb-4">
+            <input asp-for="IsAnonymous" class="form-check-input" />
+            <label asp-for="IsAnonymous" class="form-check-label"></label>
+        </div>
+
+        <button type="submit" class="btn btn-brand-action w-100">
+            <i class="bi bi-lock-fill me-1"></i> Continue to secure payment (SSLCommerz)
+        </button>
+        <p class="small text-muted mt-2 mb-0">
+            You will be taken to SSLCommerz's payment page. MHARS never sees or stores your card or mobile-wallet details.
+        </p>
+    </form>
+</div>
+
+<a asp-action="Index" class="d-inline-block mt-3"><i class="bi bi-arrow-left"></i> Back to Relief Fund</a>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

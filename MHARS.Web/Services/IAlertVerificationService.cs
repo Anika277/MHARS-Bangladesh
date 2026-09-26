@@ -10,8 +10,5 @@ public interface IAlertVerificationService
 {
     Task<VerificationResult> VerifySourceAsync(
         string? sourceUrl,
-        string? district,
-        string? title,
-        string? message,
         CancellationToken ct = default);
 }

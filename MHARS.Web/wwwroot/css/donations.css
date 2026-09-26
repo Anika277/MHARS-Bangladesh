@@ -1,0 +1,98 @@
+/* ==========================================================================
+   MHARS – Relief Fund / Donations
+   Uses the brand tokens already defined in site.css (--brand-green etc.)
+   ========================================================================== */
+
+.sandbox-banner {
+    border: 2px dashed var(--alert-amber, #E07B00);
+    background: #FFF7EC;
+    color: #6B3B00;
+    border-radius: 10px;
+    padding: .6rem 1rem;
+    font-weight: 600;
+    font-size: .92rem;
+}
+
+.fund-stat {
+    background: var(--surface-solid, #fff);
+    border: 1px solid var(--border, #C8DDD6);
+    border-left: 5px solid var(--brand-green, #006A4E);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    height: 100%;
+}
+.fund-stat .label { color: var(--text-secondary, #4A6358); font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; }
+.fund-stat .value { font-family: var(--font-display, sans-serif); font-size: 2rem; font-weight: 700; color: var(--text-headings, #0D1F18); line-height: 1.1; }
+
+.campaign-card {
+    background: var(--surface-solid, #fff);
+    border: 1px solid var(--border, #C8DDD6);
+    border-radius: 12px;
+    padding: 1.1rem 1.2rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.campaign-card.closed { opacity: .65; }
+.campaign-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: .25rem; color: var(--text-headings, #0D1F18); }
+.campaign-card .meta { font-size: .82rem; color: var(--text-muted, #7A9088); margin-bottom: .6rem; }
+.campaign-card .desc { font-size: .92rem; color: var(--text-main, #1A2E24); flex-grow: 1; }
+
+.fund-progress { height: 14px; border-radius: 999px; background: var(--brand-green-light, #E8F5F0); }
+.fund-progress .progress-bar { background: var(--brand-green, #006A4E); border-radius: 999px; }
+.fund-numbers { display: flex; justify-content: space-between; font-size: .88rem; margin-top: .35rem; }
+.fund-numbers strong { color: var(--brand-green-dark, #004D38); }
+
+.amount-chips .btn { min-width: 84px; }
+
+/* ---------- Receipt ---------- */
+.receipt-card {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid var(--border, #C8DDD6);
+    border-top: 8px solid var(--brand-green, #006A4E);
+    border-radius: 12px;
+    padding: 2rem 2.2rem;
+    position: relative;
+    color: #1A2E24;
+}
+.receipt-card .receipt-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; border-bottom: 1px solid #E3ECE8; padding-bottom: 1rem; margin-bottom: 1rem; }
+.receipt-card .org { font-weight: 800; font-size: 1.25rem; color: var(--brand-green-dark, #004D38); }
+.receipt-card .org small { display: block; font-weight: 500; font-size: .8rem; color: #4A6358; }
+.receipt-card table th { width: 42%; color: #4A6358; font-weight: 600; }
+.receipt-card .amount-row td { font-size: 1.4rem; font-weight: 800; color: var(--brand-green-dark, #004D38); }
+/* The receipt is always a white card, even when the site is in dark theme.
+   site.css makes table text light in dark theme, so force dark text here. */
+.receipt-card .table,
+.receipt-card .table > :not(caption) > * > *,
+[data-theme="dark"] .receipt-card .table,
+[data-theme="dark"] .receipt-card .table > :not(caption) > * > * {
+    --bs-table-color: #1A2E24;
+    color: #1A2E24;
+    background-color: transparent;
+}
+.receipt-card .table th,
+[data-theme="dark"] .receipt-card .table > :not(caption) > * > th { color: #4A6358; }
+.receipt-card .amount-row td,
+[data-theme="dark"] .receipt-card .table > :not(caption) > .amount-row > td { color: var(--brand-green-dark, #004D38); }
+.receipt-card code { color: #B0226A; }
+.receipt-card .receipt-note { font-size: .85rem; color: #4A6358; }
+
+.paid-stamp {
+    border: 3px solid #2E7D4F; color: #2E7D4F; font-weight: 800; letter-spacing: .15em;
+    padding: .2rem .8rem; border-radius: 6px; transform: rotate(-6deg); display: inline-block;
+}
+.demo-watermark {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 5rem; font-weight: 900; color: rgba(224, 123, 0, .10); transform: rotate(-20deg);
+    pointer-events: none; letter-spacing: .1em;
+}
+
+@media print {
+    body * { visibility: hidden !important; }
+    .receipt-card, .receipt-card * { visibility: visible !important; }
+    .receipt-card { position: absolute; left: 0; top: 0; width: 100%; max-width: none; border: none; box-shadow: none; }
+    .no-print { display: none !important; }
+    .demo-watermark { color: rgba(224, 123, 0, .18) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

@@ -7,7 +7,19 @@ using MHARS.Web.Models;
 using MHARS.Web.Models.Agent;
 using MHARS.Web.Services;
 
-Env.Load(Path.Combine(AppContext.BaseDirectory, ".env"));
+// Load .env if it exists (local dev only). The hosting server has none - that is expected.
+foreach (var candidate in new[]
+{
+    Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+    Path.Combine(AppContext.BaseDirectory, ".env")
+})
+{
+    if (File.Exists(candidate))
+    {
+        Env.Load(candidate);
+        break;
+    }
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -87,28 +99,54 @@ builder.Services.Configure<GroqOptions>(builder.Configuration.GetSection("Groq")
 
 builder.Services.AddHttpClient<IGroqAgentService, GroqAgentService>();
 
+// ---------------------------------------------------------------------------
+//  Relief Fund – SSLCommerz payment gateway (sandbox)
+//  StoreId / StorePassword come from .env or host environment variables:
+//    SslCommerz__StoreId=...   SslCommerz__StorePassword=...
+// ---------------------------------------------------------------------------
+builder.Services.Configure<SslCommerzOptions>(builder.Configuration.GetSection("SslCommerz"));
+
+builder.Services.AddHttpClient<ISslCommerzService, SslCommerzService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 var app = builder.Build();
+
+
+// ---------------------------------------------------------------------------
+//  Apply migrations, then seed.
+// ---------------------------------------------------------------------------
+
 
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var logger = services.GetRequiredService<ILogger<Program>>();
+    var db = services.GetRequiredService<ApplicationDbContext>();
+
+    logger.LogInformation("EF provider  : {Provider}", db.Database.ProviderName);
+    logger.LogInformation("Database     : {Database}", db.Database.GetDbConnection().Database);
+
     try
     {
-        var db = services.GetRequiredService<ApplicationDbContext>();
-
-        logger.LogInformation("EF provider  : {Provider}", db.Database.ProviderName);
-        logger.LogInformation("Database     : {Database}", db.Database.GetDbConnection().Database);
-
         await db.Database.MigrateAsync();
-        await DbSeeder.SeedAsync(services);
-
-        logger.LogInformation("Database ready and seeded.");
+        logger.LogInformation("Migrations applied.");
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "DATABASE MIGRATION OR SEEDING FAILED.");
+        logger.LogError(ex, "MIGRATION FAILED.");
         throw;
+    }
+
+    try
+    {
+        await DbSeeder.SeedAsync(services);
+        logger.LogInformation("Seeding complete.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "SEEDING FAILED - site will still run but data may be empty.");
     }
 }
 

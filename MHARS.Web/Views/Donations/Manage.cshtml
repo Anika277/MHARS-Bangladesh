@@ -1,0 +1,84 @@
+@model List<MHARS.Web.Models.Donation>
+@using MHARS.Web.Helpers
+@using MHARS.Web.Models.ViewModels
+@{
+    ViewData["Title"] = "Donations – Admin";
+    var campaigns = ViewBag.Campaigns as List<CampaignProgress> ?? [];
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/donations.css" asp-append-version="true" />
+}
+
+<div class="page-title" data-reveal><i class="bi bi-list-check me-1"></i> Donations – Admin</div>
+<p class="page-subtitle">Every payment attempt, including pending, failed and cancelled ones. Only <strong>Paid</strong> rows count toward the public totals.</p>
+
+@if (TempData["Success"] is string ok) { <div class="alert alert-success">@ok</div> }
+
+<div class="mb-3">
+    <a class="btn btn-success" asp-action="CreateCampaign"><i class="bi bi-plus-circle me-1"></i> New Campaign</a>
+    <a class="btn btn-outline-secondary" asp-action="Index">Public tracker</a>
+</div>
+
+<div class="disaster-panel mb-4">
+    <h5>Campaigns</h5>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Title</th><th>District</th><th class="text-end">Raised</th><th class="text-end">Goal</th><th>Donors</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var p in campaigns)
+                {
+                    <tr>
+                        <td class="fw-bold">@p.Campaign.Title</td>
+                        <td>@(p.Campaign.District ?? "Nationwide")</td>
+                        <td class="text-end">@DonationDisplay.Taka(p.Raised)</td>
+                        <td class="text-end">@DonationDisplay.Taka(p.Campaign.GoalAmount)</td>
+                        <td>@p.DonorCount</td>
+                        <td>@(p.Campaign.IsActive ? "Open" : "Closed")</td>
+                        <td>
+                            <form asp-action="ToggleCampaign" asp-route-id="@p.Campaign.Id" method="post" class="d-inline">
+                                <button class="btn btn-sm btn-outline-secondary">@(p.Campaign.IsActive ? "Close" : "Reopen")</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="disaster-panel">
+    <h5>Latest 200 transactions</h5>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead><tr><th>Created</th><th>Tran ID</th><th>Donor</th><th>Campaign</th><th class="text-end">Amount</th><th>Status</th><th>Method</th><th>Note</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var d in Model)
+                {
+                    var badge = d.Status switch
+                    {
+                        MHARS.Web.Models.DonationStatus.Paid => "success",
+                        MHARS.Web.Models.DonationStatus.Pending => "warning",
+                        MHARS.Web.Models.DonationStatus.Failed => "danger",
+                        _ => "secondary"
+                    };
+                    <tr>
+                        <td class="small">@DonationDisplay.BdTime(d.CreatedAtUtc)</td>
+                        <td><code>@d.TranId</code></td>
+                        <td>@d.DonorName @if (d.IsAnonymous) { <span class="badge bg-light text-dark">anon</span> }</td>
+                        <td>@d.Campaign?.Title</td>
+                        <td class="text-end">@DonationDisplay.Taka(d.Amount, true)</td>
+                        <td><span class="badge bg-@badge">@d.Status</span></td>
+                        <td class="small">@d.CardType</td>
+                        <td class="small text-muted">@d.FailureReason</td>
+                        <td>
+                            @if (d.Status == MHARS.Web.Models.DonationStatus.Paid)
+                            {
+                                <a class="btn btn-sm btn-outline-success" asp-action="Receipt" asp-route-id="@d.ReceiptToken">Receipt</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
