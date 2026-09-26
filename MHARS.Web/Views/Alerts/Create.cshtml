@@ -42,8 +42,9 @@
                            placeholder="https://ffwc.gov.bd/..." />
                     <span asp-validation-for="SourceUrl" class="text-danger"></span>
                     <div class="form-text">
-                        Paste the exact URL of the official bulletin. MHARS will confirm
-                        the domain is a known government source (FFWC, BMD, BWDB, DDM).
+                        Paste the exact URL of the official bulletin. MHARS checks that it is an official
+                        agency site (FFWC, BMD, BWDB, DDM, ReliefWeb), that it opens, and that it mentions
+                        the district you chose (English or Bangla). All three → <strong>Verified</strong>.
                     </div>
                 </div>
                 <button type="submit" class="btn btn-brand-action"><i class="bi bi-broadcast me-1"></i> Issue Alert</button>

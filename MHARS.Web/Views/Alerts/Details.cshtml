@@ -1,20 +1,46 @@
 @model MHARS.Web.Models.Alert
+@using MHARS.Web.Models
 @{
     var badge = Model.Severity switch
     {
-        MHARS.Web.Models.SeverityLevel.High => "danger",
-        MHARS.Web.Models.SeverityLevel.Medium => "warning",
+        SeverityLevel.High => "danger",
+        SeverityLevel.Medium => "warning",
         _ => "success"
     };
-    var iconClass = Model.HazardType == MHARS.Web.Models.HazardType.Flood ? "bi-water" : "bi-activity";
+    var iconClass = Model.HazardType == HazardType.Flood ? "bi-water" : "bi-activity";
     var iconBox = Model.Severity switch
     {
-        MHARS.Web.Models.SeverityLevel.High => "red",
-        MHARS.Web.Models.SeverityLevel.Medium => "orange",
+        SeverityLevel.High => "red",
+        SeverityLevel.Medium => "orange",
         _ => "green"
     };
     ViewData["Title"] = Model.Title;
+
+    // ---- Verification checklist ----
+    var status = Model.VerificationStatus;
+    var liveAndOfficial = status is VerificationStatus.Verified or VerificationStatus.SourceReachable;
+    string? sourceHost = Uri.TryCreate(Model.SourceUrl ?? "", UriKind.Absolute, out var u) ? u.Host : null;
+
+    // Bangladesh Standard Time = UTC+6
+    string BdTime(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Utc).AddHours(6).ToString("dd MMM yyyy, hh:mm tt") + " (BST)";
+    string Ago(DateTime utc)
+    {
+        var span = DateTime.UtcNow - utc;
+        if (span.TotalMinutes < 1) return "just now";
+        if (span.TotalHours < 1) return $"{(int)span.TotalMinutes} min ago";
+        if (span.TotalDays < 1) return $"{(int)span.TotalHours} h ago";
+        return $"{(int)span.TotalDays} days ago";
+    }
+
+    var (statusTitle, statusClass, statusIcon) = status switch
+    {
+        VerificationStatus.Verified => ("Verified by an official source", "verify-ok", "bi-patch-check-fill"),
+        VerificationStatus.SourceReachable => ("Backed by an official source", "verify-official", "bi-bank2"),
+        VerificationStatus.Rejected => ("Official source could not be confirmed", "verify-fail", "bi-exclamation-triangle-fill"),
+        _ => ("Not yet linked to an official source", "verify-none", "bi-question-circle-fill")
+    };
 }
+
 <div class="disaster-panel" data-reveal>
     <div class="panel-header">
         <span><i class="bi @iconClass me-1"></i> @Model.Severity Risk — @Model.District (@Model.HazardType)</span>
@@ -27,10 +53,77 @@
             <p>@Model.Message</p>
             @if (!string.IsNullOrEmpty(Model.SourceReference))
             {
-                <p class="text-muted mb-1">Source: @Model.SourceReference</p>
+                <p class="mb-1" style="opacity:.8"><i class="bi bi-file-earmark-text me-1"></i>Source: @Model.SourceReference</p>
             }
-            <div class="event-meta">Issued by @(Model.IssuedBy ?? "Authority") on @Model.IssuedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</div>
+            <div class="event-meta">Issued by @(Model.IssuedBy ?? "Authority") on @BdTime(Model.IssuedAt)</div>
         </div>
     </div>
 </div>
-<a class="btn btn-brand-action" asp-controller="Home" asp-action="Index"><i class="bi bi-arrow-left me-1"></i> Back to Alerts</a>
+
+@* ------------------------------------------------ Verification ------------------------------------------------ *@
+@if (Model.HazardType == HazardType.Flood)
+{
+    <div class="disaster-panel verify-panel @statusClass" data-reveal>
+        <div class="verify-head">
+            <i class="bi @statusIcon"></i>
+            <div>
+                <div class="verify-title">@statusTitle</div>
+                <div class="small">How MHARS checked this alert</div>
+            </div>
+        </div>
+
+        <ul class="verify-checks">
+            @if (status == VerificationStatus.Unverified)
+            {
+                <li class="na"><i class="bi bi-dash-circle"></i> No official bulletin link has been added to this alert yet.</li>
+            }
+            else if (status == VerificationStatus.Rejected)
+            {
+                <li class="fail"><i class="bi bi-x-circle-fill"></i> @Model.VerificationNote</li>
+            }
+            else
+            {
+                <li class="ok"><i class="bi bi-check-circle-fill"></i> Source is an official agency website <strong>@sourceHost</strong></li>
+                <li class="ok"><i class="bi bi-check-circle-fill"></i> The official page was online when checked</li>
+                @if (status == VerificationStatus.Verified)
+                {
+                    <li class="ok"><i class="bi bi-check-circle-fill"></i> The official page mentions <strong>@Model.District</strong></li>
+                }
+                else
+                {
+                    <li class="na"><i class="bi bi-dash-circle"></i> @Model.District could not be matched on the page automatically</li>
+                }
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.SourceReference))
+            {
+                <li class="ok"><i class="bi bi-check-circle-fill"></i> Bulletin reference cited: <strong>@Model.SourceReference</strong></li>
+            }
+
+            @if (Model.VerifiedAt is DateTime checkedAt && liveAndOfficial)
+            {
+                <li class="info"><i class="bi bi-clock-history"></i> Last confirmed @Ago(checkedAt) — @BdTime(checkedAt)</li>
+            }
+        </ul>
+
+        @if (liveAndOfficial && !string.IsNullOrWhiteSpace(Model.SourceUrl))
+        {
+            <a class="btn btn-sm btn-outline-success" href="@Model.SourceUrl" target="_blank" rel="noopener noreferrer">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Open the official source
+            </a>
+        }
+        <div class="verify-foot">
+            MHARS confirms that each alert is backed by a live page from an official agency (FFWC, BMD, BWDB, DDM).
+            Always follow instructions from local authorities.
+        </div>
+    </div>
+}
+
+@* ------------------------------------------------ Safety / awareness ------------------------------------------------ *@
+<partial name="~/Views/Alerts/_SafetyPanel.cshtml" model="Model" />
+
+<a class="btn btn-brand-action" asp-controller="Alerts" asp-action="Index"><i class="bi bi-arrow-left me-1"></i> Back to Alerts</a>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/alert-safety.css" asp-append-version="true" />
+}

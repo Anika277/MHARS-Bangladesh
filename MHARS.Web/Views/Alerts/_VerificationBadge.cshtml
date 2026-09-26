@@ -1,0 +1,36 @@
+@model MHARS.Web.Models.Alert
+@using MHARS.Web.Models
+@*
+    Small verification badge used in the alerts table and the Edit page.
+    Hover shows exactly what was checked (VerificationNote).
+*@
+@switch (Model.VerificationStatus)
+{
+    case VerificationStatus.Verified:
+        <span class="badge text-bg-success font-heading" title="@Model.VerificationNote">
+            <i class="bi bi-patch-check-fill"></i> Verified
+        </span>
+        break;
+    case VerificationStatus.SourceReachable:
+        <span class="badge text-bg-info font-heading" title="@Model.VerificationNote">
+            <i class="bi bi-bank2"></i> Official source
+        </span>
+        break;
+    case VerificationStatus.Rejected:
+        <span class="badge text-bg-danger font-heading" title="@Model.VerificationNote">
+            <i class="bi bi-exclamation-triangle-fill"></i> Source failed
+        </span>
+        break;
+    default:
+        <span class="badge text-bg-secondary font-heading" title="No official source link was provided.">
+            <i class="bi bi-question-circle-fill"></i> No source
+        </span>
+        break;
+}
+@if (!string.IsNullOrWhiteSpace(Model.SourceUrl)
+     && Model.VerificationStatus is VerificationStatus.Verified or VerificationStatus.SourceReachable)
+{
+    <a href="@Model.SourceUrl" target="_blank" rel="noopener noreferrer" class="ms-1 small" title="Open official source">
+        <i class="bi bi-box-arrow-up-right"></i>
+    </a>
+}

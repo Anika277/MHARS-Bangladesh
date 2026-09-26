@@ -26,7 +26,18 @@ public class AlertsController(ApplicationDbContext db, IAlertVerificationService
         ViewBag.SelectedDistrict = district ?? "All";
         ViewBag.SelectedHazard = hazard;
 
-        return View(await query.ToListAsync());
+        var alerts = await query.ToListAsync();
+
+        // Districts with a CONFIRMED high-severity flood alert → red safety banner on the page.
+        ViewBag.ConfirmedHighFloodDistricts = alerts
+            .Where(a => a.HazardType == HazardType.Flood
+                     && a.Severity == SeverityLevel.High
+                     && IsConfirmed(a.VerificationStatus))
+            .Select(a => a.District)
+            .Distinct()
+            .ToList();
+
+        return View(alerts);
     }
 
     [Authorize(Roles = "Admin")]
@@ -72,6 +83,14 @@ public class AlertsController(ApplicationDbContext db, IAlertVerificationService
         if (id == null) return NotFound();
         var alert = await db.Alerts.FirstOrDefaultAsync(a => a.Id == id);
         if (alert == null) return NotFound();
+
+        // Nearest shelters = shelters in the same district (text match, as agreed in the proposal).
+        ViewBag.Shelters = await db.Shelters.AsNoTracking()
+            .Where(s => s.District == alert.District)
+            .OrderByDescending(s => s.Capacity)
+            .Take(5)
+            .ToListAsync();
+
         return View(alert);
     }
 
@@ -100,13 +119,8 @@ public class AlertsController(ApplicationDbContext db, IAlertVerificationService
             return View(alert);
         }
 
-        // Level 1 verification: fetch the cited source URL and check its domain.
-        var result = await verifier.VerifySourceAsync(alert.SourceUrl);
-        alert.VerificationStatus = result.Status;
-        alert.VerificationNote = result.Note;
-        alert.VerifiedAt = result.Status == VerificationStatus.SourceReachable
-            ? DateTime.UtcNow
-            : null;
+        // Verify the cited official source: trusted domain + page is live + page mentions this district.
+        ApplyVerification(alert, await verifier.VerifySourceAsync(alert.SourceUrl, alert.District));
 
         alert.IssuedAt = DateTime.UtcNow;
         alert.IssuedBy = User.FindFirstValue(ClaimTypes.Email);
@@ -143,9 +157,10 @@ public class AlertsController(ApplicationDbContext db, IAlertVerificationService
             var existing = await db.Alerts.FindAsync(id);
             if (existing == null) return NotFound();
 
-            // Re-verify only if the source URL changed.
-            bool sourceChanged = !string.Equals(
-                existing.SourceUrl, alert.SourceUrl, StringComparison.OrdinalIgnoreCase);
+            // Re-verify if the source URL or the district changed (the district is part of the check).
+            bool sourceChanged =
+                !string.Equals(existing.SourceUrl, alert.SourceUrl, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(existing.District, alert.District, StringComparison.Ordinal);
 
             existing.HazardType = alert.HazardType;
             existing.District = alert.District;
@@ -156,14 +171,7 @@ public class AlertsController(ApplicationDbContext db, IAlertVerificationService
             existing.SourceUrl = alert.SourceUrl;
 
             if (sourceChanged)
-            {
-                var result = await verifier.VerifySourceAsync(alert.SourceUrl);
-                existing.VerificationStatus = result.Status;
-                existing.VerificationNote = result.Note;
-                existing.VerifiedAt = result.Status == VerificationStatus.SourceReachable
-                    ? DateTime.UtcNow
-                    : null;
-            }
+                ApplyVerification(existing, await verifier.VerifySourceAsync(existing.SourceUrl, existing.District));
 
             await db.SaveChangesAsync();
         }
@@ -183,14 +191,10 @@ public class AlertsController(ApplicationDbContext db, IAlertVerificationService
         var alert = await db.Alerts.FindAsync(id);
         if (alert == null) return NotFound();
 
-        var result = await verifier.VerifySourceAsync(alert.SourceUrl);
-        alert.VerificationStatus = result.Status;
-        alert.VerificationNote = result.Note;
-        alert.VerifiedAt = result.Status == VerificationStatus.SourceReachable
-            ? DateTime.UtcNow
-            : null;
+        ApplyVerification(alert, await verifier.VerifySourceAsync(alert.SourceUrl, alert.District));
 
         await db.SaveChangesAsync();
+        TempData["VerifyMessage"] = $"Re-checked \"{alert.Title}\": {alert.VerificationNote}";
         return RedirectToAction(nameof(Index));
     }
 
@@ -216,6 +220,18 @@ public class AlertsController(ApplicationDbContext db, IAlertVerificationService
         }
         return RedirectToAction(nameof(Index));
     }
+
+    /// <summary>Copies a verification result onto the alert. VerifiedAt = "last confirmed at".</summary>
+    private static void ApplyVerification(Alert alert, VerificationResult result)
+    {
+        alert.VerificationStatus = result.Status;
+        alert.VerificationNote = result.Note.Length > 300 ? result.Note[..300] : result.Note;
+        alert.VerifiedAt = IsConfirmed(result.Status) ? DateTime.UtcNow : null;
+    }
+
+    /// <summary>Verified (district matched) or SourceReachable (official page live) = backed by an official source.</summary>
+    public static bool IsConfirmed(VerificationStatus status) =>
+        status is VerificationStatus.Verified or VerificationStatus.SourceReachable;
 
     private void PopulateDropdowns()
     {
