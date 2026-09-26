@@ -1,0 +1,138 @@
+# ---------------------------------------------------------------------------
+#  MHARS – automatic build & deploy to MonsterASP.NET
+#
+#  • Pull request to main  → BUILD ONLY (catches errors before they reach main)
+#  • Push / merge to main  → BUILD + DEPLOY to http://mhars.runasp.net
+#  • Actions tab → "Run workflow" button → deploy manually any time
+#
+#  Required GitHub secrets (Settings → Secrets and variables → Actions):
+#    WEBSITE_NAME           siteXXXX
+#    SERVER_COMPUTER_NAME   https://siteXXXX.siteasp.net:8172
+#    SERVER_USERNAME        siteXXXX
+#    SERVER_PASSWORD        (WebDeploy password from the MonsterASP control panel)
+#  Recommended secret:
+#    PROD_APPSETTINGS_JSON  the full content of your local MHARS.Web/appsettings.Production.json
+#                           (DB connection string, Groq key, SSLCommerz keys). If it is not set,
+#                           the copy already on the server is left untouched.
+# ---------------------------------------------------------------------------
+name: Build & Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two deployments at the same time.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  PROJECT: MHARS.Web/MHARS.Web.csproj
+  SITE_URL: ${{ vars.SITE_URL || 'http://mhars.runasp.net' }}
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest      # Web Deploy (msdeploy) only runs on Windows
+    environment:
+      name: ${{ github.event_name == 'pull_request' && 'preview' || 'production' }}
+      url: ${{ env.SITE_URL }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore packages
+        run: dotnet restore ${{ env.PROJECT }}
+
+      - name: Build
+        run: dotnet build ${{ env.PROJECT }} --configuration Release --no-restore
+
+      # ---------------- everything below runs only for a real deployment ----------------
+
+      - name: Check deployment secrets
+        if: github.event_name != 'pull_request'
+        shell: pwsh
+        env:
+          WEBSITE_NAME: ${{ secrets.WEBSITE_NAME }}
+          SERVER_COMPUTER_NAME: ${{ secrets.SERVER_COMPUTER_NAME }}
+          SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          $missing = @('WEBSITE_NAME','SERVER_COMPUTER_NAME','SERVER_USERNAME','SERVER_PASSWORD') |
+                     Where-Object { -not [Environment]::GetEnvironmentVariable($_) }
+          if ($missing) { Write-Error "Missing repository secrets: $($missing -join ', ')"; exit 1 }
+          Write-Host "All 4 WebDeploy secrets are present."
+
+      - name: Write production settings from secret
+        if: github.event_name != 'pull_request'
+        shell: pwsh
+        env:
+          PROD_APPSETTINGS_JSON: ${{ secrets.PROD_APPSETTINGS_JSON }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:PROD_APPSETTINGS_JSON)) {
+            Write-Host "PROD_APPSETTINGS_JSON not set - the server keeps its existing appsettings.Production.json."
+          } else {
+            try { $null = $env:PROD_APPSETTINGS_JSON | ConvertFrom-Json }
+            catch { Write-Error "PROD_APPSETTINGS_JSON is not valid JSON - fix the secret."; exit 1 }
+            Set-Content -Path MHARS.Web/appsettings.Production.json -Value $env:PROD_APPSETTINGS_JSON -Encoding utf8
+            Write-Host "appsettings.Production.json written (contents hidden)."
+          }
+
+      - name: Publish (win-x86, as MonsterASP recommends)
+        if: github.event_name != 'pull_request'
+        run: dotnet publish ${{ env.PROJECT }} --configuration Release --runtime win-x86 --self-contained false --output publish
+
+      - name: Deploy to MonsterASP.NET
+        id: deploy1
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        uses: rasmusbuchholdt/simply-web-deploy@2.2.0
+        with:
+          website-name: ${{ secrets.WEBSITE_NAME }}
+          server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
+          server-username: ${{ secrets.SERVER_USERNAME }}
+          server-password: ${{ secrets.SERVER_PASSWORD }}
+          source-path: '\publish\'
+
+      # The running site sometimes locks MHARS.Web.dll ("ERROR_FILE_IN_USE").
+      # Wait a little and try once more before giving up.
+      - name: Wait before retry
+        if: github.event_name != 'pull_request' && steps.deploy1.outcome == 'failure'
+        shell: pwsh
+        run: Start-Sleep -Seconds 45
+
+      - name: Deploy to MonsterASP.NET (retry)
+        if: github.event_name != 'pull_request' && steps.deploy1.outcome == 'failure'
+        uses: rasmusbuchholdt/simply-web-deploy@2.2.0
+        with:
+          website-name: ${{ secrets.WEBSITE_NAME }}
+          server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
+          server-username: ${{ secrets.SERVER_USERNAME }}
+          server-password: ${{ secrets.SERVER_PASSWORD }}
+          source-path: '\publish\'
+
+      - name: Smoke test (is the live site up?)
+        if: github.event_name != 'pull_request'
+        shell: pwsh
+        run: |
+          # Free plan: the first request after a deploy can take a while (app start + DB migrations).
+          for ($i = 1; $i -le 8; $i++) {
+            try {
+              $r = Invoke-WebRequest -Uri $env:SITE_URL -UseBasicParsing -TimeoutSec 60
+              if ($r.StatusCode -eq 200) { Write-Host "Live: $env:SITE_URL (HTTP 200)"; exit 0 }
+            } catch { Write-Host "Attempt $i : $($_.Exception.Message)" }
+            Start-Sleep -Seconds 20
+          }
+          Write-Error "Site did not return HTTP 200 after deployment. Check the MonsterASP control panel / logs."
+          exit 1
