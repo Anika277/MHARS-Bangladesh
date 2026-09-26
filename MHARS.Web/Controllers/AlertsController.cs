@@ -100,8 +100,9 @@ public class AlertsController(ApplicationDbContext db, IAlertVerificationService
             return View(alert);
         }
 
-        // Level 1 verification: fetch the cited source URL and check its domain.
-        var result = await verifier.VerifySourceAsync(alert.SourceUrl);
+        var result = await verifier.VerifySourceAsync(
+            alert.SourceUrl, alert.District, alert.Title, alert.Message);
+
         alert.VerificationStatus = result.Status;
         alert.VerificationNote = result.Note;
         alert.VerifiedAt = result.Status == VerificationStatus.SourceReachable
@@ -143,9 +144,11 @@ public class AlertsController(ApplicationDbContext db, IAlertVerificationService
             var existing = await db.Alerts.FindAsync(id);
             if (existing == null) return NotFound();
 
-            // Re-verify only if the source URL changed.
             bool sourceChanged = !string.Equals(
                 existing.SourceUrl, alert.SourceUrl, StringComparison.OrdinalIgnoreCase);
+            bool contentChanged =
+                !string.Equals(existing.District, alert.District, StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(existing.Message, alert.Message, StringComparison.OrdinalIgnoreCase);
 
             existing.HazardType = alert.HazardType;
             existing.District = alert.District;
@@ -155,9 +158,11 @@ public class AlertsController(ApplicationDbContext db, IAlertVerificationService
             existing.SourceReference = alert.SourceReference;
             existing.SourceUrl = alert.SourceUrl;
 
-            if (sourceChanged)
+            if (sourceChanged || contentChanged)
             {
-                var result = await verifier.VerifySourceAsync(alert.SourceUrl);
+                var result = await verifier.VerifySourceAsync(
+                    alert.SourceUrl, alert.District, alert.Title, alert.Message);
+
                 existing.VerificationStatus = result.Status;
                 existing.VerificationNote = result.Note;
                 existing.VerifiedAt = result.Status == VerificationStatus.SourceReachable
@@ -183,7 +188,9 @@ public class AlertsController(ApplicationDbContext db, IAlertVerificationService
         var alert = await db.Alerts.FindAsync(id);
         if (alert == null) return NotFound();
 
-        var result = await verifier.VerifySourceAsync(alert.SourceUrl);
+        var result = await verifier.VerifySourceAsync(
+            alert.SourceUrl, alert.District, alert.Title, alert.Message);
+
         alert.VerificationStatus = result.Status;
         alert.VerificationNote = result.Note;
         alert.VerifiedAt = result.Status == VerificationStatus.SourceReachable

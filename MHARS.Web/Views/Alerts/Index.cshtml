@@ -7,6 +7,17 @@
 <div class="page-title" data-reveal>All Hazard Alerts</div>
 <p class="page-subtitle">District-wise flood and earthquake alerts issued by the authority.</p>
 
+<div class="alert alert-secondary small d-flex align-items-start gap-2" role="alert" data-reveal>
+    <i class="bi bi-info-circle-fill mt-1"></i>
+    <div>
+        <strong>About the Source column:</strong>
+        MHARS confirms that each alert's cited URL resolves on a government domain,
+        mentions the alert's district, and contains at least one of the figures in
+        the alert text. It does <strong>not</strong> prove the government issued this
+        exact message. Cross-check with the official bulletin before acting.
+    </div>
+</div>
+
 <div class="disaster-panel" data-reveal>
     <form method="get" class="row g-2 align-items-end">
         <div class="col-auto">
@@ -66,12 +77,12 @@
                             {
                                 <span class="badge text-bg-success font-heading"
                                       title="@a.VerificationNote">
-                                    <i class="bi bi-patch-check-fill"></i> Verified
+                                    <i class="bi bi-link-45deg"></i> Source cited
                                 </span>
                                 @if (!string.IsNullOrWhiteSpace(a.SourceUrl))
                                 {
                                     <a href="@a.SourceUrl" target="_blank" rel="noopener noreferrer"
-                                       class="ms-1 small" title="Open source">
+                                       class="ms-1 small" title="Open cited source">
                                         <i class="bi bi-box-arrow-up-right"></i>
                                     </a>
                                 }
@@ -80,7 +91,7 @@
                             {
                                 <span class="badge text-bg-danger font-heading"
                                       title="@a.VerificationNote">
-                                    <i class="bi bi-exclamation-triangle-fill"></i> Unverified
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Source invalid
                                 </span>
                             }
                             else
