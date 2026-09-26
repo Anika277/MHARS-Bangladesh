@@ -7,7 +7,6 @@ using MHARS.Web.Models;
 using MHARS.Web.Models.Agent;
 using MHARS.Web.Services;
 
-<<<<<<< HEAD
 // Load .env if it exists (local dev only). The hosting server has none - that is expected.
 foreach (var candidate in new[]
 {
@@ -21,9 +20,6 @@ foreach (var candidate in new[]
         break;
     }
 }
-=======
-Env.Load(Path.Combine(AppContext.BaseDirectory, ".env"));
->>>>>>> alertverify
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -102,6 +98,18 @@ builder.Services.AddScoped<IAlertVerificationService, AlertVerificationService>(
 builder.Services.Configure<GroqOptions>(builder.Configuration.GetSection("Groq"));
 
 builder.Services.AddHttpClient<IGroqAgentService, GroqAgentService>();
+
+// ---------------------------------------------------------------------------
+//  Relief Fund – SSLCommerz payment gateway (sandbox)
+//  StoreId / StorePassword come from .env or host environment variables:
+//    SslCommerz__StoreId=...   SslCommerz__StorePassword=...
+// ---------------------------------------------------------------------------
+builder.Services.Configure<SslCommerzOptions>(builder.Configuration.GetSection("SslCommerz"));
+
+builder.Services.AddHttpClient<ISslCommerzService, SslCommerzService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 var app = builder.Build();
 

@@ -141,6 +141,25 @@ public static class DbSeeder
             );
         }
 
+        // ---------- Relief Fund campaigns (no donations are seeded: totals must come
+        //            only from real, gateway-validated sandbox payments) ----------
+        if (!await db.DonationCampaigns.AnyAsync())
+        {
+            db.DonationCampaigns.AddRange(
+                new DonationCampaign
+                {
+                    Title = "Sirajganj & Kurigram Flood Relief",
+                    Description = "Dry food, safe drinking water and oral saline for families displaced by the Jamuna and Brahmaputra floods.",
+                    HazardType = HazardType.Flood, District = "Sirajganj", GoalAmount = 500000, IsActive = true
+                },
+                new DonationCampaign
+                {
+                    Title = "Earthquake Preparedness Kits",
+                    Description = "First-aid and emergency go-bags for schools in high seismic-risk districts.",
+                    HazardType = HazardType.Earthquake, District = null, GoalAmount = 250000, IsActive = true
+                });
+        }
+
         await db.SaveChangesAsync();
     }
 

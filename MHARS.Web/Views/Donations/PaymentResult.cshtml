@@ -1,0 +1,12 @@
+@model MHARS.Web.Controllers.PaymentResultViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="disaster-panel text-center mx-auto my-4" style="max-width: 560px;" data-reveal>
+    <div class="alert alert-@Model.Tone">
+        <h4 class="alert-heading mb-2">@Model.Title</h4>
+        <p class="mb-0">@Model.Message</p>
+    </div>
+    <a asp-action="Index" class="btn btn-brand-action"><i class="bi bi-arrow-left me-1"></i> Back to Relief Fund</a>
+</div>
